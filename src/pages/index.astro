@@ -327,7 +327,9 @@ import Layout from '../layouts/Layout.astro';
           break;
         case 'w':
           event.preventDefault();
-          this.toggleFullscreen(true);
+          if (!this.isFullscreen) {
+            this.toggleFullscreen(true);
+          }
           break;
         case 's':
           event.preventDefault();

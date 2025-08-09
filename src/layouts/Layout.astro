@@ -150,27 +150,16 @@ const { title = 'AnimeGen - Anime Image Viewer' } = Astro.props;
   .image-container {
     position: relative;
     max-width: 90vw;
-    max-height: 70vh;
+    max-height: 50vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
   }
 
   .image-container.fullscreen {
     max-width: 100vw;
     max-height: 100vh;
-    border-radius: 0;
-    background: #000000;
-    backdrop-filter: none;
-    border: none;
-    box-shadow: none;
   }
 
   .main-image {
@@ -179,14 +168,19 @@ const { title = 'AnimeGen - Anime Image Viewer' } = Astro.props;
     width: auto;
     height: auto;
     object-fit: contain;
+    object-position: center;
     transition: opacity 0.3s ease;
-    border-radius: 15px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .main-image.fullscreen {
     border-radius: 0;
     max-width: 100vw;
     max-height: 100vh;
+    box-shadow: none;
+    border: none;
   }
 
   .loading-spinner {
