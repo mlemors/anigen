@@ -211,6 +211,15 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  
+  /* Scale up small images */
+  min-width: 300px;
+  min-height: 300px;
+  
+  /* Better scaling for small/pixelated images */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
   .main-image.fullscreen {
@@ -219,6 +228,10 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
     max-height: 100vh;
     box-shadow: none;
     border: none;
+    
+    /* Maintain scaling in fullscreen but allow larger sizes */
+    min-width: 400px;
+    min-height: 400px;
   }
 
   .loading-spinner {
