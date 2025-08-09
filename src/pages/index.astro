@@ -293,7 +293,6 @@ import Layout from '../layouts/Layout.astro';
 
     private goToPreviousImage(): void {
       if (this.imageHistory.length === 0 || this.currentImageIndex <= 0) {
-        this.showAlert('This is the first image in history.');
         return;
       }
 
@@ -302,10 +301,6 @@ import Layout from '../layouts/Layout.astro';
       
       this.mainImage.src = previousImage.url;
       this.updateNavigationButtons();
-
-      if (this.currentImageIndex === 0) {
-        this.showAlert('This is the first image in history.');
-      }
     }
 
     private goToNextImageOrLoadNew(): void {
@@ -321,10 +316,6 @@ import Layout from '../layouts/Layout.astro';
         const nextImage = this.imageHistory[this.currentImageIndex];
         this.mainImage.src = nextImage.url;
         this.updateNavigationButtons();
-
-        if (this.currentImageIndex === this.imageHistory.length - 1) {
-          this.showAlert('This is the newest image in history.');
-        }
       } else {
         // We're at the newest image, load a new one
         this.loadNewImage();
@@ -341,7 +332,6 @@ import Layout from '../layouts/Layout.astro';
 
     private downloadImage(): void {
       if (this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length) {
-        this.showAlert('No image available to download');
         return;
       }
 
@@ -357,7 +347,6 @@ import Layout from '../layouts/Layout.astro';
 
     private openInNewTab(): void {
       if (this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length) {
-        this.showAlert('No image URL available');
         return;
       }
 
@@ -492,14 +481,15 @@ import Layout from '../layouts/Layout.astro';
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(255, 0, 0, 0.9);
         color: white;
         padding: 1rem 2rem;
         border-radius: 10px;
-        z-index: 1000;
+        z-index: 20000;
         font-size: 0.9rem;
         max-width: 80%;
         text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       `;
       
       document.body.appendChild(alert);
