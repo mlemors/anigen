@@ -1,6 +1,5 @@
 export enum ImageSource {
   WAIFU_IM = 'waifuIm',
-  PIC_RE = 'picRe',
   WAIFU_PICS = 'waifuPics',
   PURR = 'purr',
   NEKOS_MOE = 'nekosMoe',
@@ -60,23 +59,6 @@ export class ImageApiService {
       throw new Error('No URL found in waifu.pics response');
     } catch (error) {
       throw new Error(`Failed to fetch from waifu.pics: ${error}`);
-    }
-  }
-
-  static async fetchImageFromPicRe(): Promise<ImageData> {
-    try {
-      const response = await this.fetchWithUserAgent('https://api.pic.re/waifu');
-      const data = await response.json();
-      
-      if (data.url) {
-        return {
-          url: data.url,
-          source: ImageSource.PIC_RE
-        };
-      }
-      throw new Error('No URL found in pic.re response');
-    } catch (error) {
-      throw new Error(`Failed to fetch from pic.re: ${error}`);
     }
   }
 
@@ -186,8 +168,6 @@ export class ImageApiService {
     switch (source) {
       case ImageSource.WAIFU_IM:
         return this.fetchImageFromWaifuIm();
-      case ImageSource.PIC_RE:
-        return this.fetchImageFromPicRe();
       case ImageSource.WAIFU_PICS:
         return this.fetchImageFromWaifuPics();
       case ImageSource.PURR:
@@ -210,7 +190,6 @@ export class ImageApiService {
   static getSourceDisplayName(source: ImageSource): string {
     const names: Record<ImageSource, string> = {
       [ImageSource.WAIFU_IM]: 'Waifu.im',
-      [ImageSource.PIC_RE]: 'Pic.re',
       [ImageSource.WAIFU_PICS]: 'Waifu.pics',
       [ImageSource.PURR]: 'Purr',
       [ImageSource.NEKOS_MOE]: 'Nekos.moe',
