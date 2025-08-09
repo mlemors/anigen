@@ -50,7 +50,7 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="keyboard-hint" id="keyboardHint">
-      A: Previous | D: Next | W: Fullscreen | S: Exit Fullscreen | F: Download
+      A: Previous | D: Next/New | W: Fullscreen | S: Exit Fullscreen | F: Download
     </div>
   </div>
 </Layout>
@@ -268,15 +268,50 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private goToPreviousImage(): void {
+      if (this.imageHistory.length === 0 || this.currentImageIndex <= 0) {
+        this.showAlert('This is the first image in history.');
+        return;
+      }
+
       this.currentImageIndex--;
       const previousImage = this.imageHistory[this.currentImageIndex];
       
       this.mainImage.src = previousImage.url;
       this.updateNavigationButtons();
+
+      if (this.currentImageIndex === 0) {
+        this.showAlert('This is the first image in history.');
+      }
+    }
+
+    private goToNextImageOrLoadNew(): void {
+      if (this.imageHistory.length === 0) {
+        // No history, load new image
+        this.loadNewImage();
+        return;
+      }
+
+      if (this.currentImageIndex < this.imageHistory.length - 1) {
+        // We can go forward in history
+        this.currentImageIndex++;
+        const nextImage = this.imageHistory[this.currentImageIndex];
+        this.mainImage.src = nextImage.url;
+        this.updateNavigationButtons();
+
+        if (this.currentImageIndex === this.imageHistory.length - 1) {
+          this.showAlert('This is the newest image in history.');
+        }
+      } else {
+        // We're at the newest image, load a new one
+        this.loadNewImage();
+      }
     }
 
     private updateNavigationButtons(): void {
+      // Rewind button is disabled when at the first image or no history
       this.rewindButton.disabled = this.imageHistory.length === 0 || this.currentImageIndex <= 0;
+      
+      // Safari button is disabled when no current image
       this.safariButton.disabled = this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length;
     }
 
@@ -321,7 +356,7 @@ import Layout from '../layouts/Layout.astro';
         case 'd':
         case 'arrowright':
           event.preventDefault();
-          this.loadNewImage();
+          this.goToNextImageOrLoadNew();
           break;
         case 'w':
           event.preventDefault();
@@ -371,8 +406,8 @@ import Layout from '../layouts/Layout.astro';
           // Swipe right - go to previous image
           this.goToPreviousImage();
         } else {
-          // Swipe left - load new image
-          this.loadNewImage();
+          // Swipe left - go to next image or load new
+          this.goToNextImageOrLoadNew();
         }
       }
     }
