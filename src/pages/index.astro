@@ -454,12 +454,14 @@ import Layout from '../layouts/Layout.astro';
           this.goToNextImageOrLoadNew();
           break;
         case 'w':
+        case 'arrowup':
           event.preventDefault();
           if (!this.isFullscreen) {
             this.toggleFullscreen(true);
           }
           break;
         case 's':
+        case 'arrowdown':
           event.preventDefault();
           this.toggleFullscreen(false);
           break;
