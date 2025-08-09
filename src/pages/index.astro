@@ -5,7 +5,7 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="AniGen - Anime Image Viewer">
   <div class="container" id="container">
     <header class="header">
-      <h1 class="title">Anime Image API</h1>
+      <h1 class="title text-gradient">Anime Image API</h1>
       <div class="source-selector">
         <button class="source-button" id="sourceButton">
           <span id="currentSource">Waifu.im</span> ▼
@@ -52,6 +52,10 @@ import Layout from '../layouts/Layout.astro';
     <div class="keyboard-hint" id="keyboardHint">
       A: Previous | D: Next/New | W: Fullscreen | S: Exit Fullscreen | F: Download
     </div>
+
+    <footer class="footer-text">
+      <p>made with <a href="https://github.com/withastro/astro" target="_blank" class="text-gradient">Astro</a> and much ❤️ by mlemors</p>
+    </footer>
 
     <!-- Dropdown backdrop -->
     <div class="dropdown-backdrop" id="dropdownBackdrop"></div>

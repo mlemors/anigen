@@ -383,4 +383,26 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
   .source-dropdown::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.5);
   }
+
+  .text-gradient {
+    background: linear-gradient(
+      90deg,
+      rgb(153, 137, 255),
+      rgb(137, 247, 255)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .footer-text {
+    text-align: center;
+    color: #888;
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+    line-height: 1;
+  }
+
+  .footer-text p {
+    margin: 0rem 0;
+  }
 </style>
