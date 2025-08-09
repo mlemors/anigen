@@ -43,7 +43,7 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
     height: 100vh;
     max-width: 100vw;
     padding: 1rem;
-    gap: 1rem;
+    gap: 0.5rem;
     transition: all 0.3s ease;
   }
 
@@ -169,7 +169,7 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0;
   min-height: 0;
 }
 
@@ -189,10 +189,11 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
   justify-content: center;
   width: 100%;
   height: 100%;
-  max-width: 90vw;
-  max-height: calc(100vh - 200px);
+  max-width: 100%;
+  max-height: calc(100vh - 160px);
   position: relative;
   overflow: visible;
+  margin: 0.5rem 0;
 }
 
   .image-container.fullscreen {
