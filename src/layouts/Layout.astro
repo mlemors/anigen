@@ -60,16 +60,21 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
     backdrop-filter: blur(10px);
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 60px;
+    flex-wrap: nowrap;
   }
 
   .title {
     font-size: 1.5rem;
     font-weight: bold;
     color: white;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .source-selector {
     position: relative;
+    flex-shrink: 0;
   }
 
   .source-button {
@@ -298,13 +303,17 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
     }
 
     .header {
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: center;
+      padding: 0.4rem;
+      min-height: 50px;
     }
 
     .title {
       font-size: 1.2rem;
+    }
+
+    .source-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
     }
 
     .controls {
