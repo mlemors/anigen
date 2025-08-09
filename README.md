@@ -1,43 +1,171 @@
-# Astro Starter Kit: Minimal
+# AniGen - Anime Image Viewer
 
-```sh
-npm create astro@latest -- --template minimal
+A modern, responsive web-based anime image viewer built with Astro, featuring multiple API sources, smart preloading, and intuitive navigation controls.
+
+![AniGen Screenshot](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=AniGen+Anime+Viewer)
+
+## ✨ Features
+
+### �️ **Multi-Source Image Loading**
+- **6 Anime APIs**: Waifu.im, Waifu.pics, Nekos.moe, Nekos API, Nekos.best, Nekos.life
+- **Source Switching**: Easy dropdown to switch between different image sources
+- **Smart Fallbacks**: Automatic error handling and retry logic
+
+### 🚀 **Performance & UX**
+- **Smart Preloading**: Background loading system for instant image switching
+- **Image Scaling**: Automatic upscaling for small GIFs and images
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **Glass-morphism UI**: Modern design with backdrop blur effects
+
+### 🎮 **Navigation & Controls**
+- **Keyboard Shortcuts**:
+  - `A` / `←` - Previous image
+  - `D` / `→` - Next image / Load new
+  - `W` - Enter fullscreen mode
+  - `S` - Exit fullscreen mode
+  - `F` - Download current image
+- **Touch Support**: Swipe gestures for mobile navigation
+- **Mouse Support**: Click and drag for desktop swipe simulation
+
+### 📊 **Rich Metadata Display**
+- **Image Information**: Displays anime name, character, artist, dimensions
+- **File Details**: Shows file size, format, and tags when available
+- **Smart Categories**: Category-based browsing with visual indicators
+- **Temporary Overlay**: Non-intrusive metadata display that auto-hides
+
+### 🎨 **Visual Design**
+- **Dark Theme**: Sleek black background with gradient accents
+- **Purple-Cyan Gradient**: Consistent color scheme throughout the UI
+- **Animated Elements**: Smooth transitions and hover effects
+- **Mobile-First**: Optimized for touch devices with responsive layouts
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ and npm
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/mlemors/anigen.git
+cd anigen
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Visit `http://localhost:4321` to start browsing anime images!
 
-## 🚀 Project Structure
+## 🛠️ Development
 
-Inside of your Astro project, you'll see the following folders and files:
+### Project Structure
 
 ```text
-/
+anigen/
 ├── public/
+│   └── favicon.svg
 ├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+│   ├── layouts/
+│   │   └── Layout.astro        # Global styles and layout
+│   ├── pages/
+│   │   └── index.astro         # Main application page
+│   └── services/
+│       └── imageApis.ts        # API service layer
+├── package.json
+└── README.md
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+### Available Commands
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+| Command | Action |
+|---------|--------|
+| `npm install` | Install dependencies |
+| `npm run dev` | Start dev server at `localhost:4321` |
+| `npm run build` | Build production site to `./dist/` |
+| `npm run preview` | Preview production build locally |
 
-Any static assets, like images, can be placed in the `public/` directory.
+### Adding New Image Sources
 
-## 🧞 Commands
+To add a new anime image API:
 
-All commands are run from the root of the project, from a terminal:
+1. Add the source to the `ImageSource` enum in `imageApis.ts`
+2. Create a fetch method following the existing pattern
+3. Add the case to the `fetchImageFromSource` switch statement
+4. Add the display name to `getSourceDisplayName`
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 🎯 Usage Guide
 
-## 👀 Want to learn more?
+### Basic Navigation
+1. **Load Images**: Click the ⏩ button or press `D` to load new images
+2. **Browse History**: Use ⏪ button or press `A` to go back to previous images
+3. **Change Sources**: Click the source dropdown to switch between different APIs
+4. **Fullscreen**: Press `W` to enter fullscreen mode, `S` to exit
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### Advanced Features
+- **Download**: Press `F` or click ❤️ to download the current image
+- **External View**: Click 🔗 to open the image in a new tab
+- **Swipe Navigation**: On mobile, swipe left/right to navigate
+- **Auto-Hide UI**: Interface elements fade out in fullscreen mode
+
+## 🔧 Technical Details
+
+### Built With
+- **Astro 5.12.9** - Static site generator
+- **TypeScript** - Type-safe development
+- **Vanilla JavaScript** - No heavy frameworks, just fast DOM manipulation
+- **CSS3** - Modern styling with flexbox, gradients, and animations
+
+### API Integration
+The app integrates with multiple anime image APIs:
+- **Waifu.im**: High-quality images with rich metadata
+- **Waifu.pics**: Category-based anime images
+- **Nekos.moe**: Community-driven neko images
+- **Nekos.best**: Reliable anime character images
+- **Nekos.life**: Long-running anime API
+- **Nekos API**: Alternative neko source
+
+### Performance Features
+- **Smart Caching**: Maintains a pool of 3 preloaded images
+- **Background Loading**: Non-blocking image fetching
+- **Error Recovery**: Graceful handling of API failures
+- **Memory Management**: Automatic cleanup of old images
+
+## � Browser Support
+
+- **Chrome/Edge**: Full support with all features
+- **Firefox**: Full support with all features
+- **Safari**: Full support with all features
+- **Mobile Browsers**: Touch gestures and responsive design
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the GPL v3.0 License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Astro Team** - For the amazing static site generator
+- **API Providers** - All the anime image API services that make this possible
+- **Community** - For inspiration and feedback
+
+## 🐛 Issues & Support
+
+If you encounter any issues or have suggestions:
+1. Check existing [Issues](https://github.com/mlemors/anigen/issues)
+2. Create a new issue with detailed description
+3. Include browser version and steps to reproduce
+
+---
+
+Made with ❤️ and **Astro** by [mlemors](https://github.com/mlemors)
