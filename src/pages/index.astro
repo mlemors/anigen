@@ -52,6 +52,9 @@ import Layout from '../layouts/Layout.astro';
     <div class="keyboard-hint" id="keyboardHint">
       A: Previous | D: Next/New | W: Fullscreen | S: Exit Fullscreen | F: Download
     </div>
+
+    <!-- Dropdown backdrop -->
+    <div class="dropdown-backdrop" id="dropdownBackdrop"></div>
   </div>
 </Layout>
 
@@ -86,6 +89,7 @@ import Layout from '../layouts/Layout.astro';
     private swipeHint: HTMLElement;
     private container: HTMLElement;
     private keyboardHint: HTMLElement;
+    private dropdownBackdrop: HTMLElement;
 
     constructor() {
       this.initializeElements();
@@ -111,6 +115,7 @@ import Layout from '../layouts/Layout.astro';
       this.swipeHint = document.getElementById('swipeHint') as HTMLElement;
       this.container = document.getElementById('container') as HTMLElement;
       this.keyboardHint = document.getElementById('keyboardHint') as HTMLElement;
+      this.dropdownBackdrop = document.getElementById('dropdownBackdrop') as HTMLElement;
     }
 
     private setupEventListeners(): void {
@@ -128,6 +133,11 @@ import Layout from '../layouts/Layout.astro';
 
       // Close dropdown when clicking outside
       document.addEventListener('click', () => {
+        this.closeSourceDropdown();
+      });
+
+      // Close dropdown when clicking backdrop
+      this.dropdownBackdrop.addEventListener('click', () => {
         this.closeSourceDropdown();
       });
 
@@ -166,11 +176,25 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private toggleSourceDropdown(): void {
-      this.sourceDropdown.classList.toggle('active');
+      const isActive = this.sourceDropdown.classList.contains('active');
+      
+      if (isActive) {
+        this.closeSourceDropdown();
+      } else {
+        this.openSourceDropdown();
+      }
+    }
+
+    private openSourceDropdown(): void {
+      this.sourceDropdown.classList.add('active');
+      this.dropdownBackdrop.classList.add('active');
+      this.container.classList.add('dropdown-active');
     }
 
     private closeSourceDropdown(): void {
       this.sourceDropdown.classList.remove('active');
+      this.dropdownBackdrop.classList.remove('active');
+      this.container.classList.remove('dropdown-active');
     }
 
     private selectSource(source: ImageSource): void {
