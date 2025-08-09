@@ -8,7 +8,7 @@ import Layout from '../layouts/Layout.astro';
       <h1 class="title text-gradient">Anime Image API Crawler</h1>
       <div class="source-selector">
         <button class="source-button" id="sourceButton">
-          <span id="currentSource">Waifu.im</span> ▼
+          <span id="currentSource">waifuPics</span> ▼
         </button>
         <div class="source-dropdown" id="sourceDropdown">
           <!-- Sources will be populated by JavaScript -->
@@ -70,7 +70,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   class AnimeImageViewer {
-    private currentSource: ImageSource = ImageSource.WAIFU_IM;
+    private currentSource: ImageSource = ImageSource.WAIFU_PICS;
     private imageHistory: ImageHistoryItem[] = [];
     private currentImageIndex: number = -1;
     private isLoading: boolean = false;

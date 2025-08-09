@@ -149,8 +149,8 @@ export class ImageApiService {
 
   static getSourceDisplayName(source: ImageSource): string {
     const names: Record<ImageSource, string> = {
-      [ImageSource.WAIFU_IM]: 'Waifu.im',
       [ImageSource.WAIFU_PICS]: 'Waifu.pics',
+      [ImageSource.WAIFU_IM]: 'Waifu.im',
       [ImageSource.NEKOS_MOE]: 'Nekos.moe',
       [ImageSource.NEKOS_API]: 'Nekos API',
       [ImageSource.NEKOS_BEST]: 'Nekos.best',
