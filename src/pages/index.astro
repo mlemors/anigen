@@ -2,10 +2,10 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="AnimeGen - Anime Image Viewer">
-  <div class="container">
+<Layout title="AniGen - Anime Image Viewer">
+  <div class="container" id="container">
     <header class="header">
-      <h1 class="title">AnimeGen</h1>
+      <h1 class="title">AniGen</h1>
       <div class="source-selector">
         <button class="source-button" id="sourceButton">
           <span id="currentSource">Waifu.im</span> ▼
@@ -16,7 +16,7 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </header>
 
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
       <div class="image-container" id="imageContainer">
         <img 
           class="main-image" 
@@ -38,10 +38,10 @@ import Layout from '../layouts/Layout.astro';
       <button class="control-button" id="rewindButton" title="Previous image (A key)" disabled>
         ⏪
       </button>
-      <button class="control-button primary" id="refreshButton" title="New image (Space key)">
+      <button class="control-button primary" id="refreshButton" title="New image">
         🔄
       </button>
-      <button class="control-button" id="heartButton" title="Download image">
+      <button class="control-button" id="heartButton" title="Download image (F key)">
         ❤️
       </button>
       <button class="control-button" id="safariButton" title="Open in new tab" disabled>
@@ -49,8 +49,8 @@ import Layout from '../layouts/Layout.astro';
       </button>
     </div>
 
-    <div class="keyboard-hint">
-      A: Previous | D: Next | Space: Refresh | ↓: Download
+    <div class="keyboard-hint" id="keyboardHint">
+      A: Previous | D: Next | W: Fullscreen | S: Exit Fullscreen | F: Download
     </div>
   </div>
 </Layout>
@@ -69,6 +69,7 @@ import Layout from '../layouts/Layout.astro';
     private isLoading: boolean = false;
     private touchStartX: number = 0;
     private touchEndX: number = 0;
+    private isFullscreen: boolean = false;
 
     // DOM elements
     private mainImage: HTMLImageElement;
@@ -83,6 +84,8 @@ import Layout from '../layouts/Layout.astro';
     private safariButton: HTMLButtonElement;
     private imageContainer: HTMLElement;
     private swipeHint: HTMLElement;
+    private container: HTMLElement;
+    private keyboardHint: HTMLElement;
 
     constructor() {
       this.initializeElements();
@@ -106,6 +109,8 @@ import Layout from '../layouts/Layout.astro';
       this.safariButton = document.getElementById('safariButton') as HTMLButtonElement;
       this.imageContainer = document.getElementById('imageContainer') as HTMLElement;
       this.swipeHint = document.getElementById('swipeHint') as HTMLElement;
+      this.container = document.getElementById('container') as HTMLElement;
+      this.keyboardHint = document.getElementById('keyboardHint') as HTMLElement;
     }
 
     private setupEventListeners(): void {
@@ -263,20 +268,11 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private goToPreviousImage(): void {
-      if (this.imageHistory.length === 0 || this.currentImageIndex <= 0) {
-        this.showAlert('This is the first image in history.');
-        return;
-      }
-
       this.currentImageIndex--;
       const previousImage = this.imageHistory[this.currentImageIndex];
       
       this.mainImage.src = previousImage.url;
       this.updateNavigationButtons();
-
-      if (this.currentImageIndex === 0) {
-        this.showAlert('This is the first image in history.');
-      }
     }
 
     private updateNavigationButtons(): void {
@@ -329,13 +325,21 @@ import Layout from '../layouts/Layout.astro';
           event.preventDefault();
           this.loadNewImage();
           break;
-        case ' ':
+        case 'w':
           event.preventDefault();
-          this.loadNewImage();
+          this.toggleFullscreen(true);
           break;
-        case 'arrowdown':
+        case 's':
+          event.preventDefault();
+          this.toggleFullscreen(false);
+          break;
+        case 'f':
           event.preventDefault();
           this.downloadImage();
+          break;
+        case 'escape':
+          event.preventDefault();
+          this.toggleFullscreen(false);
           break;
       }
     }
@@ -369,6 +373,46 @@ import Layout from '../layouts/Layout.astro';
         } else {
           // Swipe left - load new image
           this.loadNewImage();
+        }
+      }
+    }
+
+    private toggleFullscreen(enable: boolean): void {
+      this.isFullscreen = enable;
+      
+      if (enable) {
+        document.body.style.overflow = 'hidden';
+        this.container.style.display = 'none';
+        this.keyboardHint.style.display = 'none';
+        
+        // Create fullscreen main content
+        const fullscreenContent = document.createElement('div');
+        fullscreenContent.className = 'main-content fullscreen';
+        fullscreenContent.id = 'fullscreenContent';
+        
+        // Clone and move image container to fullscreen content
+        const clonedContainer = this.imageContainer.cloneNode(true) as HTMLElement;
+        clonedContainer.classList.add('fullscreen');
+        const clonedImage = clonedContainer.querySelector('.main-image') as HTMLImageElement;
+        if (clonedImage) {
+          clonedImage.classList.add('fullscreen');
+        }
+        
+        fullscreenContent.appendChild(clonedContainer);
+        document.body.appendChild(fullscreenContent);
+        
+        // Hide original image container
+        this.imageContainer.style.display = 'none';
+      } else {
+        document.body.style.overflow = '';
+        this.container.style.display = 'flex';
+        this.keyboardHint.style.display = 'block';
+        this.imageContainer.style.display = 'flex';
+        
+        // Remove fullscreen content
+        const fullscreenContent = document.getElementById('fullscreenContent');
+        if (fullscreenContent) {
+          fullscreenContent.remove();
         }
       }
     }
