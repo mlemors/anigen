@@ -3,7 +3,7 @@ export interface Props {
   title?: string;
 }
 
-const { title = 'AnimeGen - Anime Image Viewer' } = Astro.props;
+const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -127,15 +127,14 @@ const { title = 'AnimeGen - Anime Image Viewer' } = Astro.props;
     font-weight: bold;
   }
 
-  .main-content {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    min-height: 0;
-    transition: all 0.3s ease;
-  }
+.main-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 0;
+}
 
   .main-content.fullscreen {
     position: fixed;
@@ -147,33 +146,34 @@ const { title = 'AnimeGen - Anime Image Viewer' } = Astro.props;
     background: #000000;
   }
 
-  .image-container {
-    position: relative;
-    max-width: 90vw;
-    max-height: 50vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
-  }
+.image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 90vw;
+  max-height: calc(100vh - 200px);
+  position: relative;
+  overflow: visible;
+}
 
   .image-container.fullscreen {
     max-width: 100vw;
     max-height: 100vh;
   }
 
-  .main-image {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    object-position: center;
-    transition: opacity 0.3s ease;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
+.main-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
 
   .main-image.fullscreen {
     border-radius: 0;
