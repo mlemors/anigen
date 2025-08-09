@@ -77,6 +77,12 @@ import Layout from '../layouts/Layout.astro';
     private touchStartX: number = 0;
     private touchEndX: number = 0;
     private isFullscreen: boolean = false;
+    
+    // Preloading system
+    private preloadedImages: Map<string, ImageData> = new Map();
+    private preloadQueue: Promise<void>[] = [];
+    private maxPreloadedImages: number = 3;
+    private isPreloading: boolean = false;
 
     // DOM elements
     private mainImage: HTMLImageElement;
@@ -102,6 +108,63 @@ import Layout from '../layouts/Layout.astro';
       this.loadSavedSource();
       this.loadNewImage();
       this.showSwipeHint();
+      this.startPreloading(); // Start background preloading
+    }
+
+    // Preloading system methods
+    private async startPreloading(): Promise<void> {
+      if (this.isPreloading) return;
+      this.isPreloading = true;
+      
+      // Start preloading images in the background
+      this.preloadImagesInBackground();
+    }
+
+    private async preloadImagesInBackground(): Promise<void> {
+      while (this.preloadedImages.size < this.maxPreloadedImages) {
+        try {
+          const imageData = await ImageApiService.fetchImageFromSource(this.currentSource);
+          
+          // Check if we already have this image
+          if (!this.preloadedImages.has(imageData.url)) {
+            // Preload the actual image
+            await this.preloadImage(imageData);
+            this.preloadedImages.set(imageData.url, imageData);
+          }
+        } catch (error) {
+          console.warn('Failed to preload image:', error);
+          // Wait a bit before trying again
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    private async preloadImage(imageData: ImageData): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to preload image'));
+        img.src = imageData.url;
+      });
+    }
+
+    private getPreloadedImage(): ImageData | null {
+      // Get the first available preloaded image
+      for (const [url, imageData] of this.preloadedImages) {
+        this.preloadedImages.delete(url);
+        
+        // Start preloading a new image to replace the one we just used
+        this.preloadImagesInBackground();
+        
+        return imageData;
+      }
+      return null;
+    }
+
+    private clearPreloadedImagesForSource(): void {
+      // Clear preloaded images when source changes
+      this.preloadedImages.clear();
+      this.preloadImagesInBackground();
     }
 
     private initializeElements(): void {
@@ -207,6 +270,7 @@ import Layout from '../layouts/Layout.astro';
       this.saveSelectedSource();
       this.populateSourceDropdown(); // Update active state
       this.closeSourceDropdown();
+      this.clearPreloadedImagesForSource(); // Clear cache for new source
       this.loadNewImage();
     }
 
@@ -225,6 +289,16 @@ import Layout from '../layouts/Layout.astro';
     private async loadNewImage(): Promise<void> {
       if (this.isLoading) return;
 
+      // Try to get a preloaded image first for instant loading
+      const preloadedImage = this.getPreloadedImage();
+      
+      if (preloadedImage) {
+        // Use preloaded image for instant display
+        await this.loadImage(preloadedImage);
+        return;
+      }
+
+      // Fallback to loading new image if no preloaded images available
       this.showLoading();
       this.hideError();
 
@@ -283,6 +357,10 @@ import Layout from '../layouts/Layout.astro';
 
           this.currentImageIndex = this.imageHistory.length - 1;
           this.updateNavigationButtons();
+          
+          // Continue preloading in background
+          this.preloadImagesInBackground();
+          
           resolve();
         };
 
