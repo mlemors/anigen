@@ -106,21 +106,15 @@ import Layout from '../layouts/Layout.astro';
       this.setupEventListeners();
       this.populateSourceDropdown();
       this.loadSavedSource();
-      this.loadNewImage();
+      this.loadNewImageDirect(); // Load first image directly, then start preloading
       this.showSwipeHint();
-      this.startPreloading(); // Start background preloading
     }
 
     // Preloading system methods
-    private async startPreloading(): Promise<void> {
+    private async preloadImagesInBackground(): Promise<void> {
       if (this.isPreloading) return;
       this.isPreloading = true;
       
-      // Start preloading images in the background
-      this.preloadImagesInBackground();
-    }
-
-    private async preloadImagesInBackground(): Promise<void> {
       while (this.preloadedImages.size < this.maxPreloadedImages) {
         try {
           const imageData = await ImageApiService.fetchImageFromSource(this.currentSource);
@@ -137,6 +131,8 @@ import Layout from '../layouts/Layout.astro';
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
+      
+      this.isPreloading = false;
     }
 
     private async preloadImage(imageData: ImageData): Promise<void> {
@@ -154,17 +150,13 @@ import Layout from '../layouts/Layout.astro';
         this.preloadedImages.delete(url);
         
         // Start preloading a new image to replace the one we just used
-        this.preloadImagesInBackground();
+        setTimeout(() => {
+          this.preloadImagesInBackground();
+        }, 100);
         
         return imageData;
       }
       return null;
-    }
-
-    private clearPreloadedImagesForSource(): void {
-      // Clear preloaded images when source changes
-      this.preloadedImages.clear();
-      this.preloadImagesInBackground();
     }
 
     private initializeElements(): void {
@@ -270,8 +262,12 @@ import Layout from '../layouts/Layout.astro';
       this.saveSelectedSource();
       this.populateSourceDropdown(); // Update active state
       this.closeSourceDropdown();
-      this.clearPreloadedImagesForSource(); // Clear cache for new source
-      this.loadNewImage();
+      
+      // Clear preloaded images for old source
+      this.preloadedImages.clear();
+      
+      // Load first image immediately without preloading delay
+      this.loadNewImageDirect();
     }
 
     private loadSavedSource(): void {
@@ -284,6 +280,27 @@ import Layout from '../layouts/Layout.astro';
 
     private saveSelectedSource(): void {
       localStorage.setItem('selectedSource', this.currentSource);
+    }
+
+    private async loadNewImageDirect(): Promise<void> {
+      if (this.isLoading) return;
+
+      // Load image directly without checking preloaded images
+      this.showLoading();
+      this.hideError();
+
+      try {
+        const imageData = await ImageApiService.fetchImageFromSource(this.currentSource);
+        await this.loadImage(imageData);
+        
+        // Start preloading in background after first image is loaded
+        setTimeout(() => {
+          this.preloadImagesInBackground();
+        }, 100);
+      } catch (error) {
+        console.error('Error loading image:', error);
+        this.showError();
+      }
     }
 
     private async loadNewImage(): Promise<void> {
