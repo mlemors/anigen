@@ -1,11 +1,11 @@
 export enum ImageSource {
+  WAIFU_VAULT = 'waifuVault',
   WAIFU_IM = 'waifuIm',
   WAIFU_PICS = 'waifuPics',
   NEKOS_MOE = 'nekosMoe',
   NEKOS_API = 'nekosApi',
   NEKOS_BEST = 'nekosBest',
   NEKOS_LIFE = 'nekosLife',
-  WAIFU_VAULT = 'waifuVault',
   PURR = 'purr',
   NSFW_COM = 'nsfwCom'
 }
@@ -428,13 +428,13 @@ export class ImageApiService {
 
   static getSourceDisplayName(source: ImageSource): string {
     const sourceNames = {
+      [ImageSource.WAIFU_VAULT]: 'Waifu Vault',
       [ImageSource.WAIFU_IM]: 'Waifu.im',
       [ImageSource.WAIFU_PICS]: 'Waifu Pics',
       [ImageSource.NEKOS_MOE]: 'Nekos.moe',
       [ImageSource.NEKOS_API]: 'Nekos API',
       [ImageSource.NEKOS_BEST]: 'Nekos.best',
       [ImageSource.NEKOS_LIFE]: 'Nekos.life',
-      [ImageSource.WAIFU_VAULT]: 'Waifu Vault',
       [ImageSource.PURR]: 'PurrBot',
       [ImageSource.NSFW_COM]: 'N-SFW.com'
     };
