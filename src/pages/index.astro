@@ -44,9 +44,6 @@ import Layout from '../layouts/Layout.astro';
       <button class="control-button primary" id="heartButton" title="Download image (F key)">
         ❤️
       </button>
-      <button class="control-button primary" id="safariButton" title="Open in new tab" disabled>
-        🔗
-      </button>
     </div>
 
     <div class="keyboard-hint" id="keyboardHint">
@@ -103,7 +100,6 @@ import Layout from '../layouts/Layout.astro';
     private rewindButton!: HTMLButtonElement;
     private refreshButton!: HTMLButtonElement;
     private heartButton!: HTMLButtonElement;
-    private safariButton!: HTMLButtonElement;
     private imageContainer!: HTMLElement;
     private swipeHint!: HTMLElement;
     private container!: HTMLElement;
@@ -302,7 +298,6 @@ import Layout from '../layouts/Layout.astro';
       this.rewindButton = document.getElementById('rewindButton') as HTMLButtonElement;
       this.refreshButton = document.getElementById('refreshButton') as HTMLButtonElement;
       this.heartButton = document.getElementById('heartButton') as HTMLButtonElement;
-      this.safariButton = document.getElementById('safariButton') as HTMLButtonElement;
       this.imageContainer = document.getElementById('imageContainer') as HTMLElement;
       this.swipeHint = document.getElementById('swipeHint') as HTMLElement;
       this.container = document.getElementById('container') as HTMLElement;
@@ -316,7 +311,6 @@ import Layout from '../layouts/Layout.astro';
       this.refreshButton.addEventListener('click', () => this.loadNewImage());
       this.rewindButton.addEventListener('click', () => this.goToPreviousImage());
       this.heartButton.addEventListener('click', () => this.downloadImage());
-      this.safariButton.addEventListener('click', () => this.openInNewTab());
 
       // Source selector
       this.sourceButton.addEventListener('click', (e) => {
@@ -693,9 +687,6 @@ import Layout from '../layouts/Layout.astro';
     private updateNavigationButtons(): void {
       // Rewind button is disabled when at the first image or no history
       this.rewindButton.disabled = this.imageHistory.length === 0 || this.currentImageIndex <= 0;
-      
-      // Safari button is disabled when no current image
-      this.safariButton.disabled = this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length;
     }
 
     private downloadImage(): void {
@@ -711,15 +702,6 @@ import Layout from '../layouts/Layout.astro';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-
-    private openInNewTab(): void {
-      if (this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length) {
-        return;
-      }
-
-      const currentImage = this.imageHistory[this.currentImageIndex];
-      window.open(currentImage.url, '_blank');
     }
 
     private handleKeyPress(event: KeyboardEvent): void {
