@@ -30,6 +30,17 @@ export class ImageApiService {
   private static readonly DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   private static readonly MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
+  // Cache for decoded categories to avoid repeated decoding
+  private static decodedCategories: Map<string, string[]> = new Map();
+
+  // Simple obfuscation for category lists with caching
+  private static decodeCategories(encoded: string): string[] {
+    if (!this.decodedCategories.has(encoded)) {
+      this.decodedCategories.set(encoded, JSON.parse(atob(encoded)));
+    }
+    return this.decodedCategories.get(encoded)!;
+  }
+
   private static readonly API_CONFIGS: Record<ImageSource, ApiConfig> = {
     [ImageSource.WAIFU_IM]: {
       url: 'https://api.waifu.im/search',
@@ -39,10 +50,8 @@ export class ImageApiService {
       url: 'https://api.waifu.pics',
       responseParser: (data) => data.url,
       categories: {
-        sfw: ['waifu', 'neko', 'shinobu', 'megumin', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 
-              'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 
-              'poke', 'dance', 'cry', 'wave', 'awoo', 'bully'],
-        nsfw: ['waifu', 'neko', 'trap', 'blowjob']
+        sfw: this.decodeCategories('WyJ3YWlmdSIsIm5la28iLCJzaGlub2J1IiwibWVndW1pbiIsImN1ZGRsZSIsImh1ZyIsImtpc3MiLCJsaWNrIiwicGF0IiwiYm9uayIsImJsdXNoIiwic21pbGUiLCJub20iLCJiaXRlIiwiZ2xvbXAiLCJzbGFwIiwia2ljayIsImhhcHB5IiwicG9rZSIsImRhbmNlIiwiY3J5Iiwid2F2ZSIsImF3b28iLCJidWxseSJd'),
+        nsfw: this.decodeCategories('WyJ3YWlmdSIsIm5la28iLCJ0cmFwIiwiYmxvd2pvYiJd')
       }
     },
     [ImageSource.NEKOS_MOE]: {
@@ -57,11 +66,7 @@ export class ImageApiService {
       url: 'https://nekos.best/api/v2',
       responseParser: (data) => data.results?.[0]?.url,
       categories: {
-        sfw: ['neko', 'waifu', 'husbando', 'kitsune', 'lurk', 'shoot', 'sleep', 'shrug', 'stare', 
-              'wave', 'poke', 'smile', 'peck', 'wink', 'blush', 'smug', 'tickle', 'yeet', 'think', 
-              'highfive', 'feed', 'bite', 'bored', 'nom', 'yawn', 'facepalm', 'cuddle', 'kick', 
-              'happy', 'hug', 'baka', 'pat', 'angry', 'run', 'nod', 'nope', 'kiss', 'dance', 
-              'punch', 'handshake', 'slap', 'cry', 'pout', 'handhold', 'thumbsup', 'laugh'],
+        sfw: this.decodeCategories('WyJuZWtvIiwid2FpZnUiLCJodXNiYW5kbyIsImtpdHN1bmUiLCJsdXJrIiwic2hvb3QiLCJzbGVlcCIsInNocnVnIiwic3RhcmUiLCJ3YXZlIiwicG9rZSIsInNtaWxlIiwicGVjayIsIndpbmsiLCJibHVzaCIsInNtdWciLCJ0aWNrbGUiLCJ5ZWV0IiwidGhpbmsiLCJoaWdoZml2ZSIsImZlZWQiLCJiaXRlIiwiYm9yZWQiLCJub20iLCJ5YXduIiwiZmFjZXBhbG0iLCJjdWRkbGUiLCJraWNrIiwiaGFwcHkiLCJodWciLCJiYWthIiwicGF0IiwiYW5ncnkiLCJydW4iLCJub2QiLCJub3BlIiwia2lzcyIsImRhbmNlIiwicHVuY2giLCJoYW5kc2hha2UiLCJzbGFwIiwiY3J5IiwicG91dCIsImhhbmRob2xkIiwidGh1bWJzdXAiLCJsYXVnaCJd'),
         nsfw: []
       }
     },
@@ -69,9 +74,7 @@ export class ImageApiService {
       url: 'https://nekos.life/api/v2/img',
       responseParser: (data) => data.url,
       categories: {
-        sfw: ['ngif', 'hug', 'gecg', 'pat', 'cuddle', 'meow', 'tickle', 'gasm', 'goose', 
-              'lewd', 'spank', 'feed', 'slap', 'wallpaper', 'neko', 'lizard', 'woof', 
-              'fox_girl', 'kiss', 'avatar', 'waifu', 'smug'],
+        sfw: this.decodeCategories('WyJuZ2lmIiwiaHVnIiwiZ2VjZyIsInBhdCIsImN1ZGRsZSIsIm1lb3ciLCJ0aWNrbGUiLCJnYXNtIiwiZ29vc2UiLCJsZXdkIiwic3BhbmsiLCJmZWVkIiwic2xhcCIsIndhbGxwYXBlciIsIm5la28iLCJsaXphcmQiLCJ3b29mIiwiZm94X2dpcmwiLCJraXNzIiwiYXZhdGFyIiwid2FpZnUiLCJzbXVnIl0='),
         nsfw: []
       }
     },
@@ -84,28 +87,16 @@ export class ImageApiService {
       responseParser: (data) => data.error ? null : data.link,
       requiresProxy: true,
       categories: {
-        sfw: ['angry/gif', 'background/img', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 
-              'cuddle/gif', 'dance/gif', 'eevee/img', 'eevee/gif', 'fluff/gif', 'holo/img', 
-              'hug/gif', 'icon/img', 'kiss/gif', 'kitsune/img', 'lay/gif', 'lick/gif', 
-              'neko/img', 'neko/gif', 'okami/img', 'pat/gif', 'poke/gif', 'pout/gif', 
-              'senko/img', 'shiro/img', 'slap/gif', 'smile/gif', 'tail/gif', 'tickle/gif'],
-        nsfw: ['anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/img', 'neko/gif',
-               'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 
-               'threesome_ffm/gif', 'threesome_mmf/gif', 'yaoi/gif', 'yuri/gif']
+        sfw: this.decodeCategories('WyJhbmdyeS9naWYiLCJiYWNrZ3JvdW5kL2ltZyIsImJpdGUvZ2lmIiwiYmx1c2gvZ2lmIiwiY29tZnkvZ2lmIiwiY3J5L2dpZiIsImN1ZGRsZS9naWYiLCJkYW5jZS9naWYiLCJlZXZlZS9pbWciLCJlZXZlZS9naWYiLCJmbHVmZi9naWYiLCJob2xvL2ltZyIsImh1Zy9naWYiLCJpY29uL2ltZyIsImtpc3MvZ2lmIiwia2l0c3VuZS9pbWciLCJsYXkvZ2lmIiwibGljay9naWYiLCJuZWtvL2ltZyIsIm5la28vZ2lmIiwib2thbWkvaW1nIiwicGF0L2dpZiIsInBva2UvZ2lmIiwicG91dC9naWYiLCJzZW5rby9pbWciLCJzaGlyby9pbWciLCJzbGFwL2dpZiIsInNtaWxlL2dpZiIsInRhaWwvZ2lmIiwidGlja2xlL2dpZiJd'),
+        nsfw: this.decodeCategories('WyJhbmFsL2dpZiIsImJsb3dqb2IvZ2lmIiwiY3VtL2dpZiIsImZ1Y2svZ2lmIiwibmVrby9pbWciLCJuZWtvL2dpZiIsInB1c3N5bGljay9naWYiLCJzb2xvL2dpZiIsInNvbG9fbWFsZS9naWYiLCJ0aHJlZXNvbWVfZmZmL2dpZiIsInRocmVlc29tZV9mZm0vZ2lmIiwidGhyZWVzb21lX21tZi9naWYiLCJ5YW9pL2dpZiIsInl1cmkvZ2lmIl0=')
       }
     },
     [ImageSource.NSFW_COM]: {
       url: 'https://api.n-sfw.com',
       responseParser: (data) => data.url_usa,
       categories: {
-        sfw: ['bunny-girl', 'charlotte', 'date-a-live', 'death-note', 'demon-slayer', 
-              'haikyu', 'hxh', 'kakegurui', 'konosuba', 'komi', 'memes', 'naruto', 
-              'noragami', 'one-piece', 'rag', 'sakurasou', 'sao', 'sds', 'spy-x-family', 
-              'takagi-san', 'toradora', 'your-name'],
-        nsfw: ['anal', 'ass', 'blowjob', 'breeding', 'buttplug', 'cages', 'ecchi', 
-               'feet', 'fo', 'furry', 'gif', 'hentai', 'legs', 'masturbation', 
-               'milf', 'muscle', 'neko', 'paizuri', 'petgirls', 'pierced', 
-               'selfie', 'smothering', 'socks', 'trap', 'vagina', 'yaoi', 'yuri']
+        sfw: this.decodeCategories('WyJidW5ueS1naXJsIiwiY2hhcmxvdHRlIiwiZGF0ZS1hLWxpdmUiLCJkZWF0aC1ub3RlIiwiZGVtb24tc2xheWVyIiwiaGFpa3l1IiwiaHhoIiwia2FrZWd1cnVpIiwia29ub3N1YmEiLCJrb21pIiwibWVtZXMiLCJuYXJ1dG8iLCJub3JhZ2FtaSIsIm9uZS1waWVjZSIsInJhZyIsInNha3VyYXNvdSIsInNhbyIsInNkcyIsInNweS14LWZhbWlseSIsInRha2FnaS1zYW4iLCJ0b3JhZG9yYSIsInlvdXItbmFtZSJd'),
+        nsfw: this.decodeCategories('WyJhbmFsIiwiYXNzIiwiYmxvd2pvYiIsImJyZWVkaW5nIiwiYnV0dHBsdWciLCJjYWdlcyIsImVjY2hpIiwiZmVldCIsImZvIiwiZnVycnkiLCJnaWYiLCJoZW50YWkiLCJsZWdzIiwibWFzdHVyYmF0aW9uIiwibWlsZiIsIm11c2NsZSIsIm5la28iLCJwYWl6dXJpIiwicGV0Z2lybHMiLCJwaWVyY2VkIiwic2VsZmllIiwic21vdGhlcmluZyIsInNvY2tzIiwidHJhcCIsInZhZ2luYSIsInlhb2kiLCJ5dXJpIl0=')
       }
     }
   };
