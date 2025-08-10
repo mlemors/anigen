@@ -107,7 +107,7 @@ import Layout from '../layouts/Layout.astro';
     private sourceDropdown!: HTMLElement;
     private currentSourceSpan!: HTMLElement;
     private rewindButton!: HTMLButtonElement;
-    private refreshButton!: HTMLButtonElement;
+    private nextButton!: HTMLButtonElement;
     private heartButton!: HTMLButtonElement;
     private imageContainer!: HTMLElement;
     private swipeHint!: HTMLElement;
@@ -448,7 +448,7 @@ import Layout from '../layouts/Layout.astro';
       this.sourceDropdown = document.getElementById('sourceDropdown') as HTMLElement;
       this.currentSourceSpan = document.getElementById('currentSource') as HTMLElement;
       this.rewindButton = document.getElementById('rewindButton') as HTMLButtonElement;
-      this.refreshButton = document.getElementById('refreshButton') as HTMLButtonElement;
+      this.nextButton = document.getElementById('refreshButton') as HTMLButtonElement;
       this.heartButton = document.getElementById('heartButton') as HTMLButtonElement;
       this.imageContainer = document.getElementById('imageContainer') as HTMLElement;
       this.swipeHint = document.getElementById('swipeHint') as HTMLElement;
@@ -460,7 +460,7 @@ import Layout from '../layouts/Layout.astro';
 
     private setupEventListeners(): void {
       // Button event listeners
-      this.refreshButton.addEventListener('click', () => this.loadNewImage());
+      this.nextButton.addEventListener('click', () => this.goToNextImageOrLoadNew());
       this.rewindButton.addEventListener('click', () => this.goToPreviousImage());
       this.heartButton.addEventListener('click', () => this.downloadImage());
 
@@ -702,7 +702,7 @@ import Layout from '../layouts/Layout.astro';
       requestAnimationFrame(() => {
         this.loadingSpinner.style.display = 'block';
         this.mainImage.style.display = 'none';
-        this.refreshButton.disabled = true;
+        this.nextButton.disabled = true;
       });
     }
 
@@ -714,7 +714,7 @@ import Layout from '../layouts/Layout.astro';
       // Batch DOM updates using requestAnimationFrame
       requestAnimationFrame(() => {
         this.loadingSpinner.style.display = 'none';
-        this.refreshButton.disabled = false;
+        this.nextButton.disabled = false;
       });
     }
 
