@@ -4,7 +4,13 @@ export enum ImageSource {
   NEKOS_MOE = 'nekosMoe',
   NEKOS_API = 'nekosApi',
   NEKOS_BEST = 'nekosBest',
-  NEKOS_LIFE = 'nekosLife'
+  NEKOS_LIFE = 'nekosLife',
+  ANIME_PICTURES = 'animePictures',
+  WAIFU_VAULT = 'waifuVault',
+  KYOKO = 'kyoko',
+  ANIPIX = 'aniPix',
+  PURR = 'purr',
+  NSFW_COM = 'nsfwCom'
 }
 
 export interface ImageData {
@@ -203,6 +209,162 @@ export class ImageApiService {
     }
   }
 
+  static async fetchImageFromAnimePictures(): Promise<ImageData> {
+    try {
+      const response = await this.fetchWithUserAgent('https://anime-pictures.net/api/v3/posts?page=0&order_by=date&ldate=0&denied_tags=&search_tag=&ext_jpg=jpg&ext_png=png&ext_gif=gif&rating=safe');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.posts && data.posts.length > 0) {
+        const randomPost = data.posts[Math.floor(Math.random() * data.posts.length)];
+        return {
+          url: `https://anime-pictures.net/pictures/get_image/${randomPost.id}`,
+          source: ImageSource.ANIME_PICTURES
+        };
+      }
+      throw new Error('No posts found in anime-pictures.net response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from anime-pictures.net: ${errorMessage}`);
+    }
+  }
+
+  static async fetchImageFromWaifuVault(): Promise<ImageData> {
+    try {
+      const response = await this.fetchWithUserAgent('https://api.waifu.pics/sfw/waifu');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        return {
+          url: data.url,
+          source: ImageSource.WAIFU_VAULT
+        };
+      }
+      throw new Error('No URL found in waifu vault response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from waifu vault: ${errorMessage}`);
+    }
+  }
+
+  static async fetchImageFromKyoko(): Promise<ImageData> {
+    try {
+      const response = await this.fetchWithUserAgent('https://kyoko.rei.my.id/api/waifu');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        return {
+          url: data.url,
+          source: ImageSource.KYOKO
+        };
+      }
+      throw new Error('No URL found in kyoko response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from kyoko: ${errorMessage}`);
+    }
+  }
+
+  static async fetchImageFromAniPix(): Promise<ImageData> {
+    try {
+      const categories = ['waifu', 'neko', 'shinobu', 'megumin'];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      const response = await this.fetchWithUserAgent(`https://api.anipix.moe/api/v1/${randomCategory}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        return {
+          url: data.url,
+          source: ImageSource.ANIPIX
+        };
+      }
+      throw new Error('No URL found in anipix response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from anipix: ${errorMessage}`);
+    }
+  }
+
+  static async fetchImageFromPurr(): Promise<ImageData> {
+    try {
+      const categories = ['waifu', 'neko', 'kitsune', 'husbando'];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      const response = await this.fetchWithUserAgent(`https://purrbot.site/api/img/sfw/${randomCategory}/img`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.link) {
+        return {
+          url: data.link,
+          source: ImageSource.PURR
+        };
+      }
+      throw new Error('No link found in purr response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from purr: ${errorMessage}`);
+    }
+  }
+
+  static async fetchImageFromNsfwCom(): Promise<ImageData> {
+    try {
+      // Using SFW categories from the working Swift implementation
+      const categories = [
+        "bunny-girl", "charlotte", "date-a-live", "death-note", "demon-slayer", 
+        "haikyu", "hxh", "kakegurui", "konosuba", "komi", "memes", "naruto", 
+        "noragami", "one-piece", "rag", "sakurasou", "sao", "sds", "spy-x-family", 
+        "takagi-san", "toradora", "your-name"
+      ];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      // Using the correct endpoint structure from Swift implementation
+      const response = await this.fetchWithUserAgent(`https://api.n-sfw.com/sfw/${randomCategory}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Using the correct response field from Swift implementation
+      if (data.url_usa) {
+        return {
+          url: data.url_usa,
+          source: ImageSource.NSFW_COM
+        };
+      }
+      throw new Error('No url_usa found in n-sfw.com response');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to fetch from n-sfw.com: ${errorMessage}`);
+    }
+  }
+
   static async fetchImageFromSource(source: ImageSource): Promise<ImageData> {
     console.log(`Fetching image from ${source} (Mobile: ${this.isMobile()})`);
     
@@ -220,6 +382,18 @@ export class ImageApiService {
           return await this.fetchImageFromNekosBest();
         case ImageSource.NEKOS_LIFE:
           return await this.fetchImageFromNekosLife();
+        case ImageSource.ANIME_PICTURES:
+          return await this.fetchImageFromAnimePictures();
+        case ImageSource.WAIFU_VAULT:
+          return await this.fetchImageFromWaifuVault();
+        case ImageSource.KYOKO:
+          return await this.fetchImageFromKyoko();
+        case ImageSource.ANIPIX:
+          return await this.fetchImageFromAniPix();
+        case ImageSource.PURR:
+          return await this.fetchImageFromPurr();
+        case ImageSource.NSFW_COM:
+          return await this.fetchImageFromNsfwCom();
         default:
           throw new Error(`Unknown image source: ${source}`);
       }
@@ -236,7 +410,13 @@ export class ImageApiService {
       [ImageSource.NEKOS_MOE]: 'Nekos.moe',
       [ImageSource.NEKOS_API]: 'Nekos API',
       [ImageSource.NEKOS_BEST]: 'Nekos.best',
-      [ImageSource.NEKOS_LIFE]: 'Nekos.life'
+      [ImageSource.NEKOS_LIFE]: 'Nekos.life',
+      [ImageSource.ANIME_PICTURES]: 'Anime Pictures',
+      [ImageSource.WAIFU_VAULT]: 'Waifu Vault',
+      [ImageSource.KYOKO]: 'Kyoko',
+      [ImageSource.ANIPIX]: 'AniPix',
+      [ImageSource.PURR]: 'PurrBot',
+      [ImageSource.NSFW_COM]: 'N-SFW.com'
     };
     return names[source] || source;
   }
