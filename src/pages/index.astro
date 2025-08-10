@@ -131,6 +131,7 @@ import Layout from '../layouts/Layout.astro';
       this.populateSourceDropdown(); // This will set the correct active state
       this.loadNewImageDirect(); // Load first image directly, then start preloading
       this.showSwipeHint();
+      this.showKeyboardHint();
       
       // Cleanup on page unload
       window.addEventListener('beforeunload', () => this.cleanup());
@@ -876,9 +877,8 @@ import Layout from '../layouts/Layout.astro';
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
       }
-
-      // Hide keyboard hint on first key press
       this.hideKeyboardHint();
+      this.hideSwipeHint();
 
       switch (event.key.toLowerCase()) {
         case 'a':
@@ -1003,7 +1003,18 @@ import Layout from '../layouts/Layout.astro';
       this.swipeHint.classList.add('show');
       
       setTimeout(() => {
-        this.swipeHint.classList.remove('show');
+        this.hideSwipeHint();
+      }, 3000);
+    }
+
+    private showKeyboardHint(): void {
+      this.keyboardHintVisible = true;
+      this.keyboardHint.style.display = 'block';
+      this.keyboardHint.style.opacity = '1';
+      this.keyboardHint.style.pointerEvents = 'auto';
+
+      setTimeout(() => {
+        this.hideKeyboardHint();
       }, 3000);
     }
 
@@ -1018,6 +1029,10 @@ import Layout from '../layouts/Layout.astro';
           this.keyboardHint.style.display = 'none';
         }, 600);
       }
+    }
+
+    private hideSwipeHint(): void {
+      this.swipeHint.classList.remove('show');
     }
 
     private showAlert(message: string, backgroundColor: string = 'rgba(255, 0, 0, 0.9)'): void {
