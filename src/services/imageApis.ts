@@ -77,6 +77,29 @@ export class ImageApiService {
     return this.fetchWithRetry(url);
   }
 
+  private static async fetchWithCorsProxy(url: string): Promise<Response> {
+    // For APIs that are known to be CORS-blocked, use proxy directly
+    try {
+      // First try the reliable allorigins proxy
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      console.log(`Using CORS proxy for: ${url}`);
+      const response = await fetch(proxyUrl);
+      if (response.ok) {
+        return response;
+      }
+      throw new Error(`Proxy failed: ${response.status}`);
+    } catch (error) {
+      // Fallback to alternative proxy
+      try {
+        const proxyUrl2 = `https://cors-anywhere.herokuapp.com/${url}`;
+        console.log(`Using fallback CORS proxy for: ${url}`);
+        return await fetch(proxyUrl2);
+      } catch (fallbackError) {
+        throw new Error(`All CORS proxies failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+  }
+
   static async fetchImageFromWaifuIm(): Promise<ImageData> {
     try {
       const nsfwParam = this.isExplicitMode() ? 'true' : 'false';
@@ -272,7 +295,8 @@ export class ImageApiService {
       
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
-      const response = await this.fetchWithUserAgent(`${endpointPrefix}${randomCategory}`);
+      // PurrBot doesn't support CORS, so use proxy directly
+      const response = await this.fetchWithCorsProxy(`${endpointPrefix}${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
