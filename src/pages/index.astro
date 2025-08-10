@@ -54,7 +54,7 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <footer class="footer-text">
-      <p>made with <a href="https://github.com/withastro/astro" target="_blank" class="text-gradient">Astro</a> and much ❤️ by mlemors</p>
+      <p>made with <a href="https://github.com/withastro/astro" target="_blank" class="text-gradient">Astro</a> and much ❤️ by <span id="mlemorsText" class="tap-target">mlemors</span></p>
     </footer>
 
     <!-- Dropdown backdrop -->
@@ -88,6 +88,11 @@ import Layout from '../layouts/Layout.astro';
     private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
     private cachedElements: Map<string, HTMLElement> = new Map();
 
+    // explicit mode activation
+    private tapCount: number = 0;
+    private tapTimer: ReturnType<typeof setTimeout> | null = null;
+    private isExplicitMode: boolean = false;
+
     // DOM elements
     private mainImage!: HTMLImageElement;
     private loadingSpinner!: HTMLElement;
@@ -104,11 +109,13 @@ import Layout from '../layouts/Layout.astro';
     private container!: HTMLElement;
     private keyboardHint!: HTMLElement;
     private dropdownBackdrop!: HTMLElement;
+    private mlemorsText!: HTMLElement;
 
     constructor() {
       this.initializeElements();
       this.setupEventListeners();
       this.loadSavedSource();
+      this.loadExplicitMode();
       this.populateSourceDropdown(); // This will set the correct active state
       this.loadNewImageDirect(); // Load first image directly, then start preloading
       this.showSwipeHint();
@@ -129,6 +136,11 @@ import Layout from '../layouts/Layout.astro';
       }
       this.debounceTimers.clear();
       
+      // Clear tap timer
+      if (this.tapTimer) {
+        clearTimeout(this.tapTimer);
+      }
+      
       // Clear caches
       this.preloadedImages.clear();
       this.cachedElements.clear();
@@ -136,6 +148,7 @@ import Layout from '../layouts/Layout.astro';
       // Reset flags
       this.isPreloading = false;
       this.isLoading = false;
+      this.tapCount = 0;
     }
 
     // Preloading system methods
@@ -264,6 +277,7 @@ import Layout from '../layouts/Layout.astro';
       this.container = document.getElementById('container') as HTMLElement;
       this.keyboardHint = document.getElementById('keyboardHint') as HTMLElement;
       this.dropdownBackdrop = document.getElementById('dropdownBackdrop') as HTMLElement;
+      this.mlemorsText = document.getElementById('mlemorsText') as HTMLElement;
     }
 
     private setupEventListeners(): void {
@@ -302,6 +316,8 @@ import Layout from '../layouts/Layout.astro';
 
       // Prevent context menu on long press
       this.imageContainer.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      this.mlemorsText.addEventListener('click', () => this.handleMlemorsTap());
     }
 
     private updateSourceButton(): void {
@@ -394,6 +410,46 @@ import Layout from '../layouts/Layout.astro';
       if (savedSource && Object.values(ImageSource).includes(savedSource as ImageSource)) {
         this.currentSource = savedSource as ImageSource;
         this.updateSourceButton();
+      }
+    }
+
+    private loadExplicitMode(): void {
+      this.isExplicitMode = ImageApiService.getExplicitMode();
+    }
+
+    private handleMlemorsTap(): void {
+      this.tapCount++;
+      
+      // Clear existing timer
+      if (this.tapTimer) {
+        clearTimeout(this.tapTimer);
+      }
+      
+      if (this.tapCount >= 5) {
+        this.toggleExplicitMode();
+        this.tapCount = 0;
+      } else {
+        // Reset tap count after 2 seconds
+        this.tapTimer = setTimeout(() => {
+          this.tapCount = 0;
+        }, 2000);
+      }
+    }
+
+    private toggleExplicitMode(): void {
+      this.isExplicitMode = !this.isExplicitMode;
+      ImageApiService.setExplicitMode(this.isExplicitMode);
+
+      const message = this.isExplicitMode
+        ? '🔞 NSFW Mode Activated!'
+        : '✅ NSFW Mode Deactivated';
+      
+      this.showAlert(message, this.isExplicitMode ? '#ff6b6b' : '#4CAF50');
+      
+      // Clear preloaded images and reload with new mode
+      this.preloadedImages.clear();
+      if (this.preloadAbortController) {
+        this.preloadAbortController.abort();
       }
     }
 
@@ -733,7 +789,7 @@ import Layout from '../layouts/Layout.astro';
       }, 3000);
     }
 
-    private showAlert(message: string): void {
+    private showAlert(message: string, backgroundColor: string = 'rgba(255, 0, 0, 0.9)'): void {
       // Create a temporary alert
       const alert = document.createElement('div');
       alert.textContent = message;
@@ -742,7 +798,7 @@ import Layout from '../layouts/Layout.astro';
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(255, 0, 0, 0.9);
+        background: ${backgroundColor};
         color: white;
         padding: 1rem 2rem;
         border-radius: 10px;

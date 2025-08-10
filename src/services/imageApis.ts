@@ -22,6 +22,18 @@ export class ImageApiService {
   private static readonly DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   private static readonly MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
+  private static isExplicitMode(): boolean {
+    return localStorage.getItem('explicitMode') === 'true';
+  }
+
+  static setExplicitMode(enabled: boolean): void {
+    localStorage.setItem('explicitMode', enabled.toString());
+  }
+
+  static getExplicitMode(): boolean {
+    return this.isExplicitMode();
+  }
+
   private static isMobile(): boolean {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
@@ -70,7 +82,8 @@ export class ImageApiService {
 
   static async fetchImageFromWaifuIm(): Promise<ImageData> {
     try {
-      const response = await this.fetchWithUserAgent('https://api.waifu.im/search?is_nsfw=false');
+      const nsfwParam = this.isExplicitMode() ? 'true' : 'false';
+      const response = await this.fetchWithUserAgent(`https://api.waifu.im/search?is_nsfw=${nsfwParam}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -93,10 +106,20 @@ export class ImageApiService {
 
   static async fetchImageFromWaifuPics(): Promise<ImageData> {
     try {
-      const categories = ['waifu', 'neko', 'shinobu', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 'poke', 'dance'];
+      let categories: string[];
+      let endpoint: string;
+      
+      if (this.isExplicitMode()) {
+        categories = ['waifu', 'neko', 'trap', 'blowjob'];
+        endpoint = 'nsfw';
+      } else {
+        categories = ['waifu', 'neko', 'shinobu', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 'poke', 'dance'];
+        endpoint = 'sfw';
+      }
+      
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
-      const response = await this.fetchWithUserAgent(`https://api.waifu.pics/sfw/${randomCategory}`);
+      const response = await this.fetchWithUserAgent(`https://api.waifu.pics/${endpoint}/${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -333,17 +356,32 @@ export class ImageApiService {
 
   static async fetchImageFromNsfwCom(): Promise<ImageData> {
     try {
-      // Using SFW categories from the working Swift implementation
-      const categories = [
-        "bunny-girl", "charlotte", "date-a-live", "death-note", "demon-slayer", 
-        "haikyu", "hxh", "kakegurui", "konosuba", "komi", "memes", "naruto", 
-        "noragami", "one-piece", "rag", "sakurasou", "sao", "sds", "spy-x-family", 
-        "takagi-san", "toradora", "your-name"
-      ];
+      let categories: string[];
+      let endpointPrefix: string;
+      
+      if (this.isExplicitMode()) {
+        // NSFW categories from Swift implementation
+        categories = [
+          "anal", "ass", "blowjob", "breeding", "buttplug", "cages", "ecchi", 
+          "feet", "fo", "furry", "gif", "hentai", "legs", "masturbation", 
+          "milf", "muscle", "neko", "paizuri", "petgirls", "pierced", 
+          "selfie", "smothering", "socks", "trap", "vagina", "yaoi", "yuri"
+        ];
+        endpointPrefix = "https://api.n-sfw.com/nsfw/";
+      } else {
+        // SFW categories from Swift implementation
+        categories = [
+          "bunny-girl", "charlotte", "date-a-live", "death-note", "demon-slayer", 
+          "haikyu", "hxh", "kakegurui", "konosuba", "komi", "memes", "naruto", 
+          "noragami", "one-piece", "rag", "sakurasou", "sao", "sds", "spy-x-family", 
+          "takagi-san", "toradora", "your-name"
+        ];
+        endpointPrefix = "https://api.n-sfw.com/sfw/";
+      }
+      
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
-      // Using the correct endpoint structure from Swift implementation
-      const response = await this.fetchWithUserAgent(`https://api.n-sfw.com/sfw/${randomCategory}`);
+      const response = await this.fetchWithUserAgent(`${endpointPrefix}${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
