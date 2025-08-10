@@ -284,12 +284,22 @@ export class ImageApiService {
       let endpointPrefix: string;
       
       if (this.isExplicitMode()) {
-        // Using v2 API for explicit content
-        categories = ['neko/img']; // Limited explicit categories available in v2
+        // Using v2 API for explicit content - all available categories from API documentation
+        categories = [
+          'anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/img', 'neko/gif',
+          'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 
+          'threesome_ffm/gif', 'threesome_mmf/gif', 'yaoi/gif', 'yuri/gif'
+        ];
         endpointPrefix = 'https://api.purrbot.site/v2/img/nsfw/';
       } else {
-        // Using v2 API for SFW content with available categories
-        categories = ['neko/img', 'kitsune/img', 'holo/img', 'senko/img', 'shiro/img'];
+        // Using v2 API for SFW content - all available categories from API documentation
+        categories = [
+          'angry/gif', 'background/img', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 
+          'cuddle/gif', 'dance/gif', 'eevee/img', 'eevee/gif', 'fluff/gif', 'holo/img', 
+          'hug/gif', 'icon/img', 'kiss/gif', 'kitsune/img', 'lay/gif', 'lick/gif', 
+          'neko/img', 'neko/gif', 'okami/img', 'pat/gif', 'poke/gif', 'pout/gif', 
+          'senko/img', 'shiro/img', 'slap/gif', 'smile/gif', 'tail/gif', 'tickle/gif'
+        ];
         endpointPrefix = 'https://api.purrbot.site/v2/img/sfw/';
       }
       
