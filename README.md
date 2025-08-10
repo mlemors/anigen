@@ -48,8 +48,8 @@ A modern, responsive web-based anime image viewer built with Astro, featuring mu
 
 ```bash
 # Clone the repository
-git clone https://github.com/mlemors/anigen.git
-cd anigen
+git clone https://github.com/mlemors/mlemors-anigen.git
+cd mlemors-anigen
 
 # Install dependencies
 npm install
@@ -65,7 +65,7 @@ Visit `http://localhost:4321` to start browsing anime images!
 ### Project Structure
 
 ```text
-anigen/
+mlemors-anigen/
 ├── public/
 │   └── favicon.svg
 ├── src/
@@ -162,7 +162,7 @@ This project is licensed under the GPL v3.0 License - see the [LICENSE](LICENSE)
 ## 🐛 Issues & Support
 
 If you encounter any issues or have suggestions:
-1. Check existing [Issues](https://github.com/mlemors/anigen/issues)
+1. Check existing [Issues](https://github.com/mlemors/mlemors-anigen/issues)
 2. Create a new issue with detailed description
 3. Include browser version and steps to reproduce
 
