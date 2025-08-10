@@ -284,7 +284,6 @@ export class ImageApiService {
       let endpointPrefix: string;
       
       if (this.isExplicitMode()) {
-        // Using v2 API for explicit content - all available categories from API documentation
         categories = [
           'anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/img', 'neko/gif',
           'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 
@@ -292,7 +291,6 @@ export class ImageApiService {
         ];
         endpointPrefix = 'https://api.purrbot.site/v2/img/nsfw/';
       } else {
-        // Using v2 API for SFW content - all available categories from API documentation
         categories = [
           'angry/gif', 'background/img', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 
           'cuddle/gif', 'dance/gif', 'eevee/img', 'eevee/gif', 'fluff/gif', 'holo/img', 
