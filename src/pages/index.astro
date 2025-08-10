@@ -108,8 +108,8 @@ import Layout from '../layouts/Layout.astro';
     constructor() {
       this.initializeElements();
       this.setupEventListeners();
-      this.populateSourceDropdown();
       this.loadSavedSource();
+      this.populateSourceDropdown(); // This will set the correct active state
       this.loadNewImageDirect(); // Load first image directly, then start preloading
       this.showSwipeHint();
       
@@ -304,9 +304,28 @@ import Layout from '../layouts/Layout.astro';
       this.imageContainer.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
+    private updateSourceButton(): void {
+      this.currentSourceSpan.textContent = ImageApiService.getSourceDisplayName(this.currentSource);
+    }
+
+    private updateDropdownActiveState(): void {
+      // Remove active class from all options
+      const options = this.sourceDropdown.querySelectorAll('.source-option');
+      options.forEach(option => option.classList.remove('active'));
+      
+      // Add active class to current source option
+      const currentOption = this.sourceDropdown.querySelector(`[data-source="${this.currentSource}"]`);
+      if (currentOption) {
+        currentOption.classList.add('active');
+      }
+    }
+
     private populateSourceDropdown(): void {
       const sources = ImageApiService.getAllSources();
       this.sourceDropdown.innerHTML = '';
+
+      // Ensure the button text matches the current source
+      this.updateSourceButton();
 
       sources.forEach(source => {
         const option = document.createElement('div');
@@ -353,9 +372,9 @@ import Layout from '../layouts/Layout.astro';
       }
       
       this.currentSource = source;
-      this.currentSourceSpan.textContent = ImageApiService.getSourceDisplayName(source);
+      this.updateSourceButton();
+      this.updateDropdownActiveState(); // Update visual selection in dropdown
       this.saveSelectedSource();
-      this.populateSourceDropdown(); // Update active state
       this.closeSourceDropdown();
       
       // Cancel any ongoing preloading for old source
@@ -374,7 +393,7 @@ import Layout from '../layouts/Layout.astro';
       const savedSource = localStorage.getItem('selectedSource');
       if (savedSource && Object.values(ImageSource).includes(savedSource as ImageSource)) {
         this.currentSource = savedSource as ImageSource;
-        this.currentSourceSpan.textContent = ImageApiService.getSourceDisplayName(this.currentSource);
+        this.updateSourceButton();
       }
     }
 
