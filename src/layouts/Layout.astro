@@ -307,12 +307,13 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
     justify-content: center;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
+    padding: 0.5rem;
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    min-height: 60px;
   }
 
   .control-button {
@@ -417,7 +418,8 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
 
     .controls {
       gap: 0.5rem;
-      padding: 0.5rem;
+      padding: 0.4rem;
+      min-height: 50px;
     }
 
     .control-button {
