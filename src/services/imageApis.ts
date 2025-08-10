@@ -133,7 +133,12 @@ export class ImageApiService {
         categories = ['waifu', 'neko', 'trap', 'blowjob'];
         endpoint = 'nsfw';
       } else {
-        categories = ['waifu', 'neko', 'shinobu', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 'poke', 'dance'];
+        // Expanded SFW categories for Waifu Pics
+        categories = [
+          'waifu', 'neko', 'shinobu', 'megumin', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 
+          'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 
+          'poke', 'dance', 'cry', 'wave', 'awoo', 'bully'
+        ];
         endpoint = 'sfw';
       }
       
@@ -208,7 +213,14 @@ export class ImageApiService {
 
   static async fetchImageFromNekosBest(): Promise<ImageData> {
     try {
-      const categories = ['neko', 'waifu', 'kitsune'];
+      // All available categories from nekos.best/api/v2/endpoints
+      const categories = [
+        'neko', 'waifu', 'husbando', 'kitsune', 'lurk', 'shoot', 'sleep', 'shrug', 'stare', 
+        'wave', 'poke', 'smile', 'peck', 'wink', 'blush', 'smug', 'tickle', 'yeet', 'think', 
+        'highfive', 'feed', 'bite', 'bored', 'nom', 'yawn', 'facepalm', 'cuddle', 'kick', 
+        'happy', 'hug', 'baka', 'pat', 'angry', 'run', 'nod', 'nope', 'kiss', 'dance', 
+        'punch', 'handshake', 'slap', 'cry', 'pout', 'handhold', 'thumbsup', 'laugh'
+      ];
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
       const response = await this.fetchWithUserAgent(`https://nekos.best/api/v2/${randomCategory}`);
@@ -234,7 +246,15 @@ export class ImageApiService {
 
   static async fetchImageFromNekosLife(): Promise<ImageData> {
     try {
-      const response = await this.fetchWithUserAgent('https://nekos.life/api/v2/img/waifu');
+      // All available categories from nekos.life/api/v2/endpoints (img/ categories only)
+      const categories = [
+        'ngif', 'hug', 'gecg', 'pat', 'cuddle', 'meow', 'tickle', 'gasm', 'goose', 
+        'lewd', 'spank', 'feed', 'slap', 'wallpaper', 'neko', 'lizard', 'woof', 
+        'fox_girl', 'kiss', 'avatar', 'waifu', 'smug'
+      ];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      const response = await this.fetchWithUserAgent(`https://nekos.life/api/v2/img/${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
