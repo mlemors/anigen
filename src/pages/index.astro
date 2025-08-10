@@ -80,26 +80,30 @@ import Layout from '../layouts/Layout.astro';
     
     // Preloading system
     private preloadedImages: Map<string, ImageData> = new Map();
-    private preloadQueue: Promise<void>[] = [];
     private maxPreloadedImages: number = 3;
     private isPreloading: boolean = false;
+    private preloadAbortController: AbortController | null = null;
+
+    // Performance optimizations
+    private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+    private cachedElements: Map<string, HTMLElement> = new Map();
 
     // DOM elements
-    private mainImage: HTMLImageElement;
-    private loadingSpinner: HTMLElement;
-    private errorMessage: HTMLElement;
-    private sourceButton: HTMLButtonElement;
-    private sourceDropdown: HTMLElement;
-    private currentSourceSpan: HTMLElement;
-    private rewindButton: HTMLButtonElement;
-    private refreshButton: HTMLButtonElement;
-    private heartButton: HTMLButtonElement;
-    private safariButton: HTMLButtonElement;
-    private imageContainer: HTMLElement;
-    private swipeHint: HTMLElement;
-    private container: HTMLElement;
-    private keyboardHint: HTMLElement;
-    private dropdownBackdrop: HTMLElement;
+    private mainImage!: HTMLImageElement;
+    private loadingSpinner!: HTMLElement;
+    private errorMessage!: HTMLElement;
+    private sourceButton!: HTMLButtonElement;
+    private sourceDropdown!: HTMLElement;
+    private currentSourceSpan!: HTMLElement;
+    private rewindButton!: HTMLButtonElement;
+    private refreshButton!: HTMLButtonElement;
+    private heartButton!: HTMLButtonElement;
+    private safariButton!: HTMLButtonElement;
+    private imageContainer!: HTMLElement;
+    private swipeHint!: HTMLElement;
+    private container!: HTMLElement;
+    private keyboardHint!: HTMLElement;
+    private dropdownBackdrop!: HTMLElement;
 
     constructor() {
       this.initializeElements();
@@ -108,38 +112,99 @@ import Layout from '../layouts/Layout.astro';
       this.loadSavedSource();
       this.loadNewImageDirect(); // Load first image directly, then start preloading
       this.showSwipeHint();
+      
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => this.cleanup());
+    }
+
+    private cleanup(): void {
+      // Cancel any ongoing preloading
+      if (this.preloadAbortController) {
+        this.preloadAbortController.abort();
+      }
+      
+      // Clear all debounce timers
+      for (const timer of this.debounceTimers.values()) {
+        clearTimeout(timer);
+      }
+      this.debounceTimers.clear();
+      
+      // Clear caches
+      this.preloadedImages.clear();
+      this.cachedElements.clear();
+      
+      // Reset flags
+      this.isPreloading = false;
+      this.isLoading = false;
     }
 
     // Preloading system methods
     private async preloadImagesInBackground(): Promise<void> {
+      // Prevent multiple concurrent preloading sessions
       if (this.isPreloading) return;
+      
+      // Cancel any existing preloading
+      if (this.preloadAbortController) {
+        this.preloadAbortController.abort();
+      }
+      
+      this.preloadAbortController = new AbortController();
       this.isPreloading = true;
       
-      while (this.preloadedImages.size < this.maxPreloadedImages) {
-        try {
+      try {
+        while (this.preloadedImages.size < this.maxPreloadedImages && !this.preloadAbortController.signal.aborted) {
           const imageData = await ImageApiService.fetchImageFromSource(this.currentSource);
+          
+          if (this.preloadAbortController.signal.aborted) break;
           
           // Check if we already have this image
           if (!this.preloadedImages.has(imageData.url)) {
             // Preload the actual image
-            await this.preloadImage(imageData);
-            this.preloadedImages.set(imageData.url, imageData);
+            await this.preloadImage(imageData, this.preloadAbortController.signal);
+            
+            if (!this.preloadAbortController.signal.aborted) {
+              this.preloadedImages.set(imageData.url, imageData);
+            }
           }
-        } catch (error) {
+        }
+      } catch (error) {
+        if (!this.preloadAbortController?.signal.aborted) {
           console.warn('Failed to preload image:', error);
-          // Wait a bit before trying again
+          // Wait before retrying
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
+      } finally {
+        this.isPreloading = false;
       }
-      
-      this.isPreloading = false;
     }
 
-    private async preloadImage(imageData: ImageData): Promise<void> {
+    private async preloadImage(imageData: ImageData, signal?: AbortSignal): Promise<void> {
       return new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to preload image'));
+        
+        const cleanup = () => {
+          img.onload = null;
+          img.onerror = null;
+        };
+        
+        img.onload = () => {
+          cleanup();
+          resolve();
+        };
+        
+        img.onerror = () => {
+          cleanup();
+          reject(new Error('Failed to preload image'));
+        };
+        
+        // Handle abort signal
+        if (signal) {
+          signal.addEventListener('abort', () => {
+            cleanup();
+            reject(new Error('Preload aborted'));
+          });
+        }
+        
         img.src = imageData.url;
       });
     }
@@ -149,14 +214,38 @@ import Layout from '../layouts/Layout.astro';
       for (const [url, imageData] of this.preloadedImages) {
         this.preloadedImages.delete(url);
         
-        // Start preloading a new image to replace the one we just used
-        setTimeout(() => {
+        // Debounce preloading restart
+        this.debounce('preload', () => {
           this.preloadImagesInBackground();
-        }, 100);
+        }, 200);
         
         return imageData;
       }
       return null;
+    }
+
+    // Performance utility methods
+    private debounce(key: string, func: Function, delay: number): void {
+      const existingTimer = this.debounceTimers.get(key);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+      
+      const timer = setTimeout(() => {
+        func();
+        this.debounceTimers.delete(key);
+      }, delay);
+      
+      this.debounceTimers.set(key, timer);
+    }
+
+    private getElement<T extends HTMLElement>(id: string): T {
+      const cached = this.cachedElements.get(id) as T;
+      if (cached) return cached;
+      
+      const element = document.getElementById(id) as T;
+      this.cachedElements.set(id, element);
+      return element;
     }
 
     private initializeElements(): void {
@@ -257,11 +346,22 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private selectSource(source: ImageSource): void {
+      // Prevent unnecessary work if same source
+      if (source === this.currentSource) {
+        this.closeSourceDropdown();
+        return;
+      }
+      
       this.currentSource = source;
       this.currentSourceSpan.textContent = ImageApiService.getSourceDisplayName(source);
       this.saveSelectedSource();
       this.populateSourceDropdown(); // Update active state
       this.closeSourceDropdown();
+      
+      // Cancel any ongoing preloading for old source
+      if (this.preloadAbortController) {
+        this.preloadAbortController.abort();
+      }
       
       // Clear preloaded images for old source
       this.preloadedImages.clear();
@@ -329,59 +429,94 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private showLoading(): void {
+      if (this.isLoading) return; // Prevent redundant calls
+      
       this.isLoading = true;
-      this.loadingSpinner.style.display = 'block';
-      this.mainImage.style.display = 'none';
-      this.refreshButton.disabled = true;
+      
+      // Batch DOM updates using requestAnimationFrame
+      requestAnimationFrame(() => {
+        this.loadingSpinner.style.display = 'block';
+        this.mainImage.style.display = 'none';
+        this.refreshButton.disabled = true;
+      });
     }
 
     private hideLoading(): void {
+      if (!this.isLoading) return; // Prevent redundant calls
+      
       this.isLoading = false;
-      this.loadingSpinner.style.display = 'none';
-      this.refreshButton.disabled = false;
+      
+      // Batch DOM updates using requestAnimationFrame
+      requestAnimationFrame(() => {
+        this.loadingSpinner.style.display = 'none';
+        this.refreshButton.disabled = false;
+      });
     }
 
     private showError(): void {
       this.hideLoading();
-      this.errorMessage.style.display = 'block';
-      this.mainImage.style.display = 'none';
+      
+      requestAnimationFrame(() => {
+        this.errorMessage.style.display = 'block';
+        this.mainImage.style.display = 'none';
+      });
     }
 
     private hideError(): void {
-      this.errorMessage.style.display = 'none';
+      requestAnimationFrame(() => {
+        this.errorMessage.style.display = 'none';
+      });
     }
 
     private async loadImage(imageData: ImageData): Promise<void> {
       return new Promise((resolve, reject) => {
         const img = new Image();
         
+        const cleanup = () => {
+          img.onload = null;
+          img.onerror = null;
+        };
+        
         img.onload = () => {
-          this.mainImage.src = img.src;
-          this.mainImage.style.display = 'block';
-          this.hideLoading();
-          this.hideError();
+          // Use requestAnimationFrame for smooth DOM updates
+          requestAnimationFrame(() => {
+            this.mainImage.src = img.src;
+            this.mainImage.style.display = 'block';
+            this.hideLoading();
+            this.hideError();
 
-          // Add to history if not already the last image
-          const historyItem: ImageHistoryItem = {
-            ...imageData,
-            timestamp: Date.now()
-          };
+            // Add to history if not already the last image
+            const historyItem: ImageHistoryItem = {
+              ...imageData,
+              timestamp: Date.now()
+            };
 
-          if (this.imageHistory.length === 0 || 
-              this.imageHistory[this.imageHistory.length - 1].url !== imageData.url) {
-            this.imageHistory.push(historyItem);
-          }
+            if (this.imageHistory.length === 0 || 
+                this.imageHistory[this.imageHistory.length - 1].url !== imageData.url) {
+              this.imageHistory.push(historyItem);
+              
+              // Limit history size to prevent memory bloat
+              if (this.imageHistory.length > 50) {
+                this.imageHistory = this.imageHistory.slice(-30);
+                this.currentImageIndex = Math.min(this.currentImageIndex, this.imageHistory.length - 1);
+              }
+            }
 
-          this.currentImageIndex = this.imageHistory.length - 1;
-          this.updateNavigationButtons();
-          
-          // Continue preloading in background
-          this.preloadImagesInBackground();
-          
-          resolve();
+            this.currentImageIndex = this.imageHistory.length - 1;
+            this.updateNavigationButtons();
+            
+            // Debounce preloading continuation
+            this.debounce('continue-preload', () => {
+              this.preloadImagesInBackground();
+            }, 500);
+            
+            cleanup();
+            resolve();
+          });
         };
 
         img.onerror = () => {
+          cleanup();
           this.showError();
           reject(new Error('Failed to load image'));
         };
@@ -499,7 +634,10 @@ import Layout from '../layouts/Layout.astro';
 
     private handleTouchEnd(event: TouchEvent): void {
       this.touchEndX = event.changedTouches[0].screenX;
-      this.handleSwipe();
+      // Throttle swipe handling
+      this.debounce('swipe', () => {
+        this.handleSwipe();
+      }, 50);
     }
 
     private handleMouseDown(event: MouseEvent): void {
@@ -508,7 +646,10 @@ import Layout from '../layouts/Layout.astro';
 
     private handleMouseUp(event: MouseEvent): void {
       this.touchEndX = event.screenX;
-      this.handleSwipe();
+      // Throttle swipe handling
+      this.debounce('swipe', () => {
+        this.handleSwipe();
+      }, 50);
     }
 
     private handleSwipe(): void {
