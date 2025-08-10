@@ -14,6 +14,24 @@ const { title = 'AniGen - Anime Image Viewer' } = Astro.props;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="generator" content={Astro.generator} />
+  
+  <!-- DNS prefetch and preconnect for faster image loading -->
+  <link rel="dns-prefetch" href="//api.waifu.im" />
+  <link rel="dns-prefetch" href="//api.waifu.pics" />
+  <link rel="dns-prefetch" href="//nekos.moe" />
+  <link rel="dns-prefetch" href="//nekos.best" />
+  <link rel="dns-prefetch" href="//nekos.life" />
+  <link rel="dns-prefetch" href="//api.purrbot.site" />
+  <link rel="dns-prefetch" href="//cdn.purrbot.site" />
+  <link rel="dns-prefetch" href="//api.n-sfw.com" />
+  <link rel="dns-prefetch" href="//api.allorigins.win" />
+  
+  <link rel="preconnect" href="https://api.waifu.pics" crossorigin />
+  <link rel="preconnect" href="https://nekos.best" crossorigin />
+  <link rel="preconnect" href="https://nekos.life" crossorigin />
+  <link rel="preconnect" href="https://api.purrbot.site" crossorigin />
+  <link rel="preconnect" href="https://cdn.purrbot.site" crossorigin />
+  
   <title>{title}</title>
 </head>
 <body>
