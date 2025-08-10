@@ -90,6 +90,9 @@ import Layout from '../layouts/Layout.astro';
     private tapTimer: ReturnType<typeof setTimeout> | null = null;
     private isExplicitMode: boolean = false;
 
+    // UI state
+    private keyboardHintVisible: boolean = true;
+
     // Cinema mode background
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -860,6 +863,9 @@ import Layout from '../layouts/Layout.astro';
         return;
       }
 
+      // Hide keyboard hint on first key press
+      this.hideKeyboardHint();
+
       switch (event.key.toLowerCase()) {
         case 'a':
         case 'arrowleft':
@@ -978,6 +984,19 @@ import Layout from '../layouts/Layout.astro';
       setTimeout(() => {
         this.swipeHint.classList.remove('show');
       }, 3000);
+    }
+
+    private hideKeyboardHint(): void {
+      if (this.keyboardHintVisible) {
+        this.keyboardHintVisible = false;
+        this.keyboardHint.style.opacity = '0';
+        this.keyboardHint.style.pointerEvents = 'none';
+        
+        // Completely hide after transition (match CSS transition time)
+        setTimeout(() => {
+          this.keyboardHint.style.display = 'none';
+        }, 600);
+      }
     }
 
     private showAlert(message: string, backgroundColor: string = 'rgba(255, 0, 0, 0.9)'): void {
