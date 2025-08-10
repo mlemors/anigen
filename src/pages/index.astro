@@ -437,6 +437,7 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private toggleExplicitMode(): void {
+      const wasExplicitMode = this.isExplicitMode;
       this.isExplicitMode = !this.isExplicitMode;
       ImageApiService.setExplicitMode(this.isExplicitMode);
 
@@ -450,6 +451,18 @@ import Layout from '../layouts/Layout.astro';
       this.preloadedImages.clear();
       if (this.preloadAbortController) {
         this.preloadAbortController.abort();
+      }
+
+      // If deactivating explicit mode, immediately clear history and load new SFW image
+      if (wasExplicitMode && !this.isExplicitMode) {
+        // Clear all explicit content from history
+        this.imageHistory = [];
+        this.currentImageIndex = 0;
+        
+        // Immediately load a new SFW image to replace any explicit content
+        this.debounce('loadNewImage', () => {
+          this.loadNewImage();
+        }, 100);
       }
     }
 
