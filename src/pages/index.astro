@@ -1008,6 +1008,7 @@ import Layout from '../layouts/Layout.astro';
     }
 
     private showKeyboardHint(): void {
+      if (!this.isMobileDevice) {
       this.keyboardHintVisible = true;
       this.keyboardHint.style.display = 'block';
       this.keyboardHint.style.opacity = '1';
@@ -1016,6 +1017,7 @@ import Layout from '../layouts/Layout.astro';
       setTimeout(() => {
         this.hideKeyboardHint();
       }, 3000);
+      }
     }
 
     private hideKeyboardHint(): void {
