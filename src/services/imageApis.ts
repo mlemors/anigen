@@ -188,7 +188,10 @@ export class ImageApiService {
 
   static async fetchImageFromNekosBest(): Promise<ImageData> {
     try {
-      const response = await this.fetchWithUserAgent('https://nekos.best/api/v2/neko');
+      const categories = ['neko', 'waifu', 'kitsune'];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      const response = await this.fetchWithUserAgent(`https://nekos.best/api/v2/${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -281,7 +284,19 @@ export class ImageApiService {
 
   static async fetchImageFromKyoko(): Promise<ImageData> {
     try {
-      const response = await this.fetchWithUserAgent('https://kyoko.rei.my.id/api/waifu');
+      let categories: string[];
+      let endpointPrefix: string;
+      
+      if (this.isExplicitMode()) {
+        categories = ['waifu', 'neko', 'trap', 'blowjob'];
+        endpointPrefix = 'https://waifu.rei.my.id/nsfw/';
+      } else {
+        categories = ['waifu', 'neko', 'shinobu', 'megumin', 'bully', 'cuddle', 'cry', 'hug', 'awoo', 'kiss', 'lick', 'pat', 'smug', 'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 'poke', 'dance'];
+        endpointPrefix = 'https://waifu.rei.my.id/sfw/';
+      }
+      
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      const response = await this.fetchWithUserAgent(`${endpointPrefix}${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -289,13 +304,13 @@ export class ImageApiService {
       
       const data = await response.json();
       
-      if (data.url) {
+      if (data.RequestResult && data.RequestResult.length > 0 && data.RequestResult[0].url) {
         return {
-          url: data.url,
+          url: data.RequestResult[0].url,
           source: ImageSource.KYOKO
         };
       }
-      throw new Error('No URL found in kyoko response');
+      throw new Error('No RequestResult found in kyoko response');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to fetch from kyoko: ${errorMessage}`);
@@ -330,10 +345,20 @@ export class ImageApiService {
 
   static async fetchImageFromPurr(): Promise<ImageData> {
     try {
-      const categories = ['waifu', 'neko', 'kitsune', 'husbando'];
+      let categories: string[];
+      let endpointPrefix: string;
+      
+      if (this.isExplicitMode()) {
+        categories = ['anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/gif', 'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 'threesome_ffm/gif', 'threesome_mmf/gif', 'yuri/gif', 'neko/img'];
+        endpointPrefix = 'https://purrbot.site/api/img/nsfw/';
+      } else {
+        categories = ['angry/gif', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 'cuddle/gif', 'dance/gif', 'eevee/gif', 'fluff/gif', 'holo/gif', 'hug/gif', 'kiss/gif', 'lay/gif', 'lick/gif', 'neko/gif', 'pat/gif', 'poke/gif', 'pout/gif', 'slap/gif', 'smile/gif', 'tail/gif', 'tickle/gif', 'background/img', 'eevee/img', 'holo/img', 'icon/img', 'kitsune/img', 'neko/img', 'okami/img', 'senko/img', 'shiro/img'];
+        endpointPrefix = 'https://purrbot.site/api/img/sfw/';
+      }
+      
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
-      const response = await this.fetchWithUserAgent(`https://purrbot.site/api/img/sfw/${randomCategory}/img`);
+      const response = await this.fetchWithUserAgent(`${endpointPrefix}${randomCategory}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
