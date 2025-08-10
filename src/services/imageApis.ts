@@ -15,9 +15,100 @@ export interface ImageData {
   source: ImageSource;
 }
 
+interface ApiConfig {
+  url: string;
+  method?: 'GET' | 'POST';
+  responseParser: (data: any) => string | null;
+  categories?: {
+    sfw: string[];
+    nsfw: string[];
+  };
+  requiresProxy?: boolean;
+}
+
 export class ImageApiService {
   private static readonly DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   private static readonly MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+  private static readonly API_CONFIGS: Record<ImageSource, ApiConfig> = {
+    [ImageSource.WAIFU_IM]: {
+      url: 'https://api.waifu.im/search',
+      responseParser: (data) => data.images?.[0]?.url,
+    },
+    [ImageSource.WAIFU_PICS]: {
+      url: 'https://api.waifu.pics',
+      responseParser: (data) => data.url,
+      categories: {
+        sfw: ['waifu', 'neko', 'shinobu', 'megumin', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 
+              'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 
+              'poke', 'dance', 'cry', 'wave', 'awoo', 'bully'],
+        nsfw: ['waifu', 'neko', 'trap', 'blowjob']
+      }
+    },
+    [ImageSource.NEKOS_MOE]: {
+      url: 'https://nekos.moe/api/v1/random/image?nsfw=false',
+      responseParser: (data) => data.images?.[0] ? `https://nekos.moe/image/${data.images[0].id}` : null,
+    },
+    [ImageSource.NEKOS_API]: {
+      url: 'https://nekos.best/api/v2/waifu',
+      responseParser: (data) => data.results?.[0]?.url,
+    },
+    [ImageSource.NEKOS_BEST]: {
+      url: 'https://nekos.best/api/v2',
+      responseParser: (data) => data.results?.[0]?.url,
+      categories: {
+        sfw: ['neko', 'waifu', 'husbando', 'kitsune', 'lurk', 'shoot', 'sleep', 'shrug', 'stare', 
+              'wave', 'poke', 'smile', 'peck', 'wink', 'blush', 'smug', 'tickle', 'yeet', 'think', 
+              'highfive', 'feed', 'bite', 'bored', 'nom', 'yawn', 'facepalm', 'cuddle', 'kick', 
+              'happy', 'hug', 'baka', 'pat', 'angry', 'run', 'nod', 'nope', 'kiss', 'dance', 
+              'punch', 'handshake', 'slap', 'cry', 'pout', 'handhold', 'thumbsup', 'laugh'],
+        nsfw: []
+      }
+    },
+    [ImageSource.NEKOS_LIFE]: {
+      url: 'https://nekos.life/api/v2/img',
+      responseParser: (data) => data.url,
+      categories: {
+        sfw: ['ngif', 'hug', 'gecg', 'pat', 'cuddle', 'meow', 'tickle', 'gasm', 'goose', 
+              'lewd', 'spank', 'feed', 'slap', 'wallpaper', 'neko', 'lizard', 'woof', 
+              'fox_girl', 'kiss', 'avatar', 'waifu', 'smug'],
+        nsfw: []
+      }
+    },
+    [ImageSource.WAIFU_VAULT]: {
+      url: 'https://api.waifu.pics/sfw/waifu',
+      responseParser: (data) => data.url,
+    },
+    [ImageSource.PURR]: {
+      url: 'https://api.purrbot.site/v2/img',
+      responseParser: (data) => data.error ? null : data.link,
+      requiresProxy: true,
+      categories: {
+        sfw: ['angry/gif', 'background/img', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 
+              'cuddle/gif', 'dance/gif', 'eevee/img', 'eevee/gif', 'fluff/gif', 'holo/img', 
+              'hug/gif', 'icon/img', 'kiss/gif', 'kitsune/img', 'lay/gif', 'lick/gif', 
+              'neko/img', 'neko/gif', 'okami/img', 'pat/gif', 'poke/gif', 'pout/gif', 
+              'senko/img', 'shiro/img', 'slap/gif', 'smile/gif', 'tail/gif', 'tickle/gif'],
+        nsfw: ['anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/img', 'neko/gif',
+               'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 
+               'threesome_ffm/gif', 'threesome_mmf/gif', 'yaoi/gif', 'yuri/gif']
+      }
+    },
+    [ImageSource.NSFW_COM]: {
+      url: 'https://api.n-sfw.com',
+      responseParser: (data) => data.url_usa,
+      categories: {
+        sfw: ['bunny-girl', 'charlotte', 'date-a-live', 'death-note', 'demon-slayer', 
+              'haikyu', 'hxh', 'kakegurui', 'konosuba', 'komi', 'memes', 'naruto', 
+              'noragami', 'one-piece', 'rag', 'sakurasou', 'sao', 'sds', 'spy-x-family', 
+              'takagi-san', 'toradora', 'your-name'],
+        nsfw: ['anal', 'ass', 'blowjob', 'breeding', 'buttplug', 'cages', 'ecchi', 
+               'feet', 'fo', 'furry', 'gif', 'hentai', 'legs', 'masturbation', 
+               'milf', 'muscle', 'neko', 'paizuri', 'petgirls', 'pierced', 
+               'selfie', 'smothering', 'socks', 'trap', 'vagina', 'yaoi', 'yuri']
+      }
+    }
+  };
 
   private static isExplicitMode(): boolean {
     return localStorage.getItem('explicitMode') === 'true';
@@ -100,297 +191,49 @@ export class ImageApiService {
     }
   }
 
-  static async fetchImageFromWaifuIm(): Promise<ImageData> {
-    try {
-      const nsfwParam = this.isExplicitMode() ? 'true' : 'false';
-      const response = await this.fetchWithUserAgent(`https://api.waifu.im/search?is_nsfw=${nsfwParam}`);
+  private static buildApiUrl(source: ImageSource): string {
+    const config = this.API_CONFIGS[source];
+    const isExplicit = this.isExplicitMode();
+    
+    switch (source) {
+      case ImageSource.WAIFU_IM:
+        return `${config.url}?is_nsfw=${isExplicit}`;
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+      case ImageSource.WAIFU_PICS:
+        if (!config.categories) return config.url;
+        const endpoint = isExplicit ? 'nsfw' : 'sfw';
+        const categories = isExplicit ? config.categories.nsfw : config.categories.sfw;
+        const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+        return `${config.url}/${endpoint}/${randomCategory}`;
       
-      const data = await response.json();
+      case ImageSource.NEKOS_BEST:
+        if (!config.categories) return config.url;
+        const bestCategories = config.categories.sfw;
+        const randomBestCategory = bestCategories[Math.floor(Math.random() * bestCategories.length)];
+        return `${config.url}/${randomBestCategory}`;
       
-      if (data.images && data.images.length > 0) {
-        return {
-          url: data.images[0].url,
-          source: ImageSource.WAIFU_IM
-        };
-      }
-      throw new Error('No images found in waifu.im response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from waifu.im: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromWaifuPics(): Promise<ImageData> {
-    try {
-      let categories: string[];
-      let endpoint: string;
+      case ImageSource.NEKOS_LIFE:
+        if (!config.categories) return config.url;
+        const lifeCategories = config.categories.sfw;
+        const randomLifeCategory = lifeCategories[Math.floor(Math.random() * lifeCategories.length)];
+        return `${config.url}/${randomLifeCategory}`;
       
-      if (this.isExplicitMode()) {
-        categories = ['waifu', 'neko', 'trap', 'blowjob'];
-        endpoint = 'nsfw';
-      } else {
-        // Expanded SFW categories for Waifu Pics
-        categories = [
-          'waifu', 'neko', 'shinobu', 'megumin', 'cuddle', 'hug', 'kiss', 'lick', 'pat', 
-          'bonk', 'blush', 'smile', 'nom', 'bite', 'glomp', 'slap', 'kick', 'happy', 
-          'poke', 'dance', 'cry', 'wave', 'awoo', 'bully'
-        ];
-        endpoint = 'sfw';
-      }
+      case ImageSource.PURR:
+        if (!config.categories) return config.url;
+        const purrEndpoint = isExplicit ? 'nsfw' : 'sfw';
+        const purrCategories = isExplicit ? config.categories.nsfw : config.categories.sfw;
+        const randomPurrCategory = purrCategories[Math.floor(Math.random() * purrCategories.length)];
+        return `${config.url}/${purrEndpoint}/${randomPurrCategory}`;
       
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      case ImageSource.NSFW_COM:
+        if (!config.categories) return config.url;
+        const nsfwEndpoint = isExplicit ? 'nsfw' : 'sfw';
+        const nsfwCategories = isExplicit ? config.categories.nsfw : config.categories.sfw;
+        const randomNsfwCategory = nsfwCategories[Math.floor(Math.random() * nsfwCategories.length)];
+        return `${config.url}/${nsfwEndpoint}/${randomNsfwCategory}`;
       
-      const response = await this.fetchWithUserAgent(`https://api.waifu.pics/${endpoint}/${randomCategory}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        return {
-          url: data.url,
-          source: ImageSource.WAIFU_PICS
-        };
-      }
-      throw new Error('No URL found in waifu.pics response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from waifu.pics: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromNekosMoe(): Promise<ImageData> {
-    try {
-      const response = await this.fetchWithUserAgent('https://nekos.moe/api/v1/random/image?nsfw=false');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.images && data.images.length > 0) {
-        return {
-          url: `https://nekos.moe/image/${data.images[0].id}`,
-          source: ImageSource.NEKOS_MOE
-        };
-      }
-      throw new Error('No images found in nekos.moe response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from nekos.moe: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromNekosApi(): Promise<ImageData> {
-    try {
-      const response = await this.fetchWithUserAgent('https://nekos.best/api/v2/waifu');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        return {
-          url: data.results[0].url,
-          source: ImageSource.NEKOS_API
-        };
-      }
-      throw new Error('No results found in nekos.best response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from nekos.best: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromNekosBest(): Promise<ImageData> {
-    try {
-      // All available categories from nekos.best/api/v2/endpoints
-      const categories = [
-        'neko', 'waifu', 'husbando', 'kitsune', 'lurk', 'shoot', 'sleep', 'shrug', 'stare', 
-        'wave', 'poke', 'smile', 'peck', 'wink', 'blush', 'smug', 'tickle', 'yeet', 'think', 
-        'highfive', 'feed', 'bite', 'bored', 'nom', 'yawn', 'facepalm', 'cuddle', 'kick', 
-        'happy', 'hug', 'baka', 'pat', 'angry', 'run', 'nod', 'nope', 'kiss', 'dance', 
-        'punch', 'handshake', 'slap', 'cry', 'pout', 'handhold', 'thumbsup', 'laugh'
-      ];
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      const response = await this.fetchWithUserAgent(`https://nekos.best/api/v2/${randomCategory}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        return {
-          url: data.results[0].url,
-          source: ImageSource.NEKOS_BEST
-        };
-      }
-      throw new Error('No results found in nekos.best response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from nekos.best: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromNekosLife(): Promise<ImageData> {
-    try {
-      // All available categories from nekos.life/api/v2/endpoints (img/ categories only)
-      const categories = [
-        'ngif', 'hug', 'gecg', 'pat', 'cuddle', 'meow', 'tickle', 'gasm', 'goose', 
-        'lewd', 'spank', 'feed', 'slap', 'wallpaper', 'neko', 'lizard', 'woof', 
-        'fox_girl', 'kiss', 'avatar', 'waifu', 'smug'
-      ];
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      const response = await this.fetchWithUserAgent(`https://nekos.life/api/v2/img/${randomCategory}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        return {
-          url: data.url,
-          source: ImageSource.NEKOS_LIFE
-        };
-      }
-      throw new Error('No URL found in nekos.life response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from nekos.life: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromWaifuVault(): Promise<ImageData> {
-    try {
-      const response = await this.fetchWithUserAgent('https://api.waifu.pics/sfw/waifu');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        return {
-          url: data.url,
-          source: ImageSource.WAIFU_VAULT
-        };
-      }
-      throw new Error('No URL found in waifu vault response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from waifu vault: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromPurr(): Promise<ImageData> {
-    try {
-      let categories: string[];
-      let endpointPrefix: string;
-      
-      if (this.isExplicitMode()) {
-        categories = [
-          'anal/gif', 'blowjob/gif', 'cum/gif', 'fuck/gif', 'neko/img', 'neko/gif',
-          'pussylick/gif', 'solo/gif', 'solo_male/gif', 'threesome_fff/gif', 
-          'threesome_ffm/gif', 'threesome_mmf/gif', 'yaoi/gif', 'yuri/gif'
-        ];
-        endpointPrefix = 'https://api.purrbot.site/v2/img/nsfw/';
-      } else {
-        categories = [
-          'angry/gif', 'background/img', 'bite/gif', 'blush/gif', 'comfy/gif', 'cry/gif', 
-          'cuddle/gif', 'dance/gif', 'eevee/img', 'eevee/gif', 'fluff/gif', 'holo/img', 
-          'hug/gif', 'icon/img', 'kiss/gif', 'kitsune/img', 'lay/gif', 'lick/gif', 
-          'neko/img', 'neko/gif', 'okami/img', 'pat/gif', 'poke/gif', 'pout/gif', 
-          'senko/img', 'shiro/img', 'slap/gif', 'smile/gif', 'tail/gif', 'tickle/gif'
-        ];
-        endpointPrefix = 'https://api.purrbot.site/v2/img/sfw/';
-      }
-      
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      // PurrBot doesn't support CORS, so use proxy directly
-      const response = await this.fetchWithCorsProxy(`${endpointPrefix}${randomCategory}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.link && !data.error) {
-        return {
-          url: data.link,
-          source: ImageSource.PURR
-        };
-      }
-      throw new Error('No link found in purr response or API returned error');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from purr: ${errorMessage}`);
-    }
-  }
-
-  static async fetchImageFromNsfwCom(): Promise<ImageData> {
-    try {
-      let categories: string[];
-      let endpointPrefix: string;
-      
-      if (this.isExplicitMode()) {
-        // NSFW categories from Swift implementation
-        categories = [
-          "anal", "ass", "blowjob", "breeding", "buttplug", "cages", "ecchi", 
-          "feet", "fo", "furry", "gif", "hentai", "legs", "masturbation", 
-          "milf", "muscle", "neko", "paizuri", "petgirls", "pierced", 
-          "selfie", "smothering", "socks", "trap", "vagina", "yaoi", "yuri"
-        ];
-        endpointPrefix = "https://api.n-sfw.com/nsfw/";
-      } else {
-        // SFW categories from Swift implementation
-        categories = [
-          "bunny-girl", "charlotte", "date-a-live", "death-note", "demon-slayer", 
-          "haikyu", "hxh", "kakegurui", "konosuba", "komi", "memes", "naruto", 
-          "noragami", "one-piece", "rag", "sakurasou", "sao", "sds", "spy-x-family", 
-          "takagi-san", "toradora", "your-name"
-        ];
-        endpointPrefix = "https://api.n-sfw.com/sfw/";
-      }
-      
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      const response = await this.fetchWithUserAgent(`${endpointPrefix}${randomCategory}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Using the correct response field from Swift implementation
-      if (data.url_usa) {
-        return {
-          url: data.url_usa,
-          source: ImageSource.NSFW_COM
-        };
-      }
-      throw new Error('No url_usa found in n-sfw.com response');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to fetch from n-sfw.com: ${errorMessage}`);
+      default:
+        return config.url;
     }
   }
 
@@ -398,31 +241,35 @@ export class ImageApiService {
     console.log(`Fetching image from ${source} (Mobile: ${this.isMobile()})`);
     
     try {
-      switch (source) {
-        case ImageSource.WAIFU_IM:
-          return await this.fetchImageFromWaifuIm();
-        case ImageSource.WAIFU_PICS:
-          return await this.fetchImageFromWaifuPics();
-        case ImageSource.NEKOS_MOE:
-          return await this.fetchImageFromNekosMoe();
-        case ImageSource.NEKOS_API:
-          return await this.fetchImageFromNekosApi();
-        case ImageSource.NEKOS_BEST:
-          return await this.fetchImageFromNekosBest();
-        case ImageSource.NEKOS_LIFE:
-          return await this.fetchImageFromNekosLife();
-        case ImageSource.WAIFU_VAULT:
-          return await this.fetchImageFromWaifuVault();
-        case ImageSource.PURR:
-          return await this.fetchImageFromPurr();
-        case ImageSource.NSFW_COM:
-          return await this.fetchImageFromNsfwCom();
-        default:
-          throw new Error(`Unknown image source: ${source}`);
+      const config = this.API_CONFIGS[source];
+      const apiUrl = this.buildApiUrl(source);
+      
+      let response: Response;
+      if (config.requiresProxy) {
+        response = await this.fetchWithCorsProxy(apiUrl);
+      } else {
+        response = await this.fetchWithUserAgent(apiUrl);
       }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const imageUrl = config.responseParser(data);
+      
+      if (!imageUrl) {
+        throw new Error(`No valid image URL found in ${source} response`);
+      }
+      
+      return {
+        url: imageUrl,
+        source
+      };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error fetching from ${source}:`, error);
-      throw error;
+      throw new Error(`Failed to fetch from ${source}: ${errorMessage}`);
     }
   }
 
