@@ -856,19 +856,120 @@ import Layout from '../layouts/Layout.astro';
       this.rewindButton.disabled = this.imageHistory.length === 0 || this.currentImageIndex <= 0;
     }
 
-    private downloadImage(): void {
+    private async downloadImage(): Promise<void> {
       if (this.currentImageIndex < 0 || this.currentImageIndex >= this.imageHistory.length) {
         return;
       }
 
       const currentImage = this.imageHistory[this.currentImageIndex];
+      
+      try {
+        // For mobile devices (iOS/Android), use different approach
+        if (this.isMobileDevice) {
+          await this.downloadImageMobile(currentImage);
+        } else {
+          // For desktop, use traditional download with save dialog
+          await this.downloadImageDesktop(currentImage);
+        }
+      } catch (error) {
+        console.warn('Download failed, falling back to simple method:', error);
+        this.fallbackDownload(currentImage);
+      }
+    }
+
+    private async downloadImageDesktop(imageData: ImageData): Promise<void> {
+      try {
+        // Fetch the image as blob to trigger proper save dialog
+        const response = await fetch(imageData.url);
+        const blob = await response.blob();
+        
+        // Create object URL from blob
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        
+        // Generate a better filename
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const extension = this.getImageExtension(imageData.url);
+        link.download = `anime_image_${timestamp}${extension}`;
+        
+        // Trigger download with save dialog
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up blob URL after a delay
+        setTimeout(() => {
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    private async downloadImageMobile(imageData: ImageData): Promise<void> {
+      try {
+        // For mobile, try to use the Web Share API if available
+        if (navigator.share && navigator.canShare) {
+          const response = await fetch(imageData.url);
+          const blob = await response.blob();
+          
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+          const extension = this.getImageExtension(imageData.url);
+          const filename = `anime_image_${timestamp}${extension}`;
+          
+          const file = new File([blob], filename, { type: blob.type });
+          
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Anime Image',
+              text: 'Downloaded from AniGen'
+            });
+            return;
+          }
+        }
+        
+        // Fallback for mobile: open image in new tab for manual save
+        const newWindow = window.open(imageData.url, '_blank');
+        if (!newWindow) {
+          throw new Error('Popup blocked');
+        }
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    private fallbackDownload(imageData: ImageData): void {
+      // Simple fallback method
       const link = document.createElement('a');
-      link.href = currentImage.url;
+      link.href = imageData.url;
       link.download = `anime_image_${Date.now()}.jpg`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    private getImageExtension(url: string): string {
+      try {
+        const urlPath = new URL(url).pathname;
+        const extension = urlPath.split('.').pop()?.toLowerCase();
+        
+        // Common image extensions
+        const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+        if (extension && validExtensions.includes(extension)) {
+          return `.${extension}`;
+        }
+      } catch (error) {
+        console.warn('Could not parse URL for extension:', error);
+      }
+      
+      // Default fallback
+      return '.jpg';
     }
 
     private handleKeyPress(event: KeyboardEvent): void {
