@@ -90,6 +90,11 @@ import Layout from '../layouts/Layout.astro';
     private tapTimer: ReturnType<typeof setTimeout> | null = null;
     private isExplicitMode: boolean = false;
 
+    // Cinema mode background
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private currentColors: string[] = ['#1a1a1a', '#2a2a2a'];
+
     // DOM elements
     private mainImage!: HTMLImageElement;
     private loadingSpinner!: HTMLElement;
@@ -108,6 +113,10 @@ import Layout from '../layouts/Layout.astro';
     private mlemorsText!: HTMLElement;
 
     constructor() {
+      // Initialize canvas for color extraction
+      this.canvas = document.createElement('canvas');
+      this.ctx = this.canvas.getContext('2d')!;
+      
       this.initializeElements();
       this.setupEventListeners();
       this.loadSavedSource();
@@ -277,6 +286,132 @@ import Layout from '../layouts/Layout.astro';
       }, delay);
       
       this.debounceTimers.set(key, timer);
+    }
+
+    // Cinema mode background methods
+    private extractDominantColors(img: HTMLImageElement): string[] {
+      try {
+        // Use smaller canvas for faster processing
+        this.canvas.width = 50;
+        this.canvas.height = 50;
+        
+        // Clear canvas
+        this.ctx.clearRect(0, 0, 50, 50);
+        
+        // Draw image to canvas
+        this.ctx.drawImage(img, 0, 0, 50, 50);
+        
+        // Get image data
+        const imageData = this.ctx.getImageData(0, 0, 50, 50);
+        const data = imageData.data;
+        
+        // Fast color counting with less precision but better performance
+        const colorCounts: Map<string, number> = new Map();
+        
+        // Sample every 8th pixel for much faster processing
+        for (let i = 0; i < data.length; i += 32) { // Every 8th pixel (4 * 8)
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const alpha = data[i + 3];
+          
+          // Skip transparent or very dark pixels
+          if (alpha < 128 || (r < 30 && g < 30 && b < 30)) continue;
+          
+          // Larger buckets for faster grouping
+          const rBucket = Math.floor(r / 40) * 40;
+          const gBucket = Math.floor(g / 40) * 40;
+          const bBucket = Math.floor(b / 40) * 40;
+          
+          const color = `${rBucket},${gBucket},${bBucket}`;
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        }
+        
+        // Get top 2 colors quickly
+        const sortedColors = Array.from(colorCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 2)
+          .map(([color]) => {
+            const [r, g, b] = color.split(',').map(Number);
+            return this.darkenColor(`rgb(${r}, ${g}, ${b})`);
+          });
+        
+        // Ensure we have 2 colors
+        if (sortedColors.length < 2) {
+          sortedColors.push('#2a1a1a', '#1a2a2a');
+        }
+        
+        return sortedColors.slice(0, 2);
+        
+      } catch (error) {
+        console.warn('Failed to extract colors:', error);
+        // Return some variety in fallback colors
+        const fallbackColors = [
+          ['#2a1a1a', '#1a2a2a'],
+          ['#1a2a1a', '#2a1a1a'],
+          ['#1a1a2a', '#2a2a1a']
+        ];
+        return fallbackColors[Math.floor(Math.random() * fallbackColors.length)];
+      }
+    }
+    
+    private darkenColor(color: string): string {
+      try {
+        const rgb = color.match(/\d+/g);
+        if (!rgb || rgb.length < 3) return '#2a1a1a';
+        
+        // Make colors darker but more vibrant for better cinema effect
+        const r = Math.max(10, Math.floor(parseInt(rgb[0]) * 0.4));
+        const g = Math.max(10, Math.floor(parseInt(rgb[1]) * 0.4));
+        const b = Math.max(10, Math.floor(parseInt(rgb[2]) * 0.4));
+        
+        // Ensure we have some color saturation
+        const max = Math.max(r, g, b);
+        if (max < 30) {
+          // If too dark, add some color bias
+          return `rgb(${r + 20}, ${g + 15}, ${b + 25})`;
+        }
+        
+        return `rgb(${r}, ${g}, ${b})`;
+      } catch {
+        return '#2a1a1a';
+      }
+    }
+    
+    private updateBackgroundFromImage(img: HTMLImageElement): void {
+      // Ensure image is loaded and has dimensions
+      if (!img.complete || img.naturalWidth === 0) {
+        img.onload = () => {
+          this.updateBackgroundFromImage(img);
+        };
+        return;
+      }
+      
+      // Extract colors immediately without debouncing
+      const colors = this.extractDominantColors(img);
+      this.currentColors = colors;
+      this.applyBackgroundGradient(colors);
+    }
+    
+    private applyBackgroundGradient(colors: string[]): void {
+      try {
+        const [color1, color2] = colors;
+        
+        console.log('Applying background gradient:', color1, color2); // Debug log
+        
+        // Update CSS custom properties directly on document.documentElement
+        document.documentElement.style.setProperty('--dynamic-bg-1', color1);
+        document.documentElement.style.setProperty('--dynamic-bg-2', color2);
+        
+        // Also update body style as fallback
+        document.body.style.setProperty('--dynamic-bg-1', color1);
+        document.body.style.setProperty('--dynamic-bg-2', color2);
+        
+        console.log('Background updated successfully'); // Debug log
+        
+      } catch (error) {
+        console.warn('Failed to apply background gradient:', error);
+      }
     }
 
     private getElement<T extends HTMLElement>(id: string): T {
@@ -612,6 +747,9 @@ import Layout from '../layouts/Layout.astro';
             this.hideLoading();
             this.hideError();
 
+            // Update background immediately after image is set
+            this.updateBackgroundFromImage(this.mainImage);
+
             // Add to history if not already the last image
             const historyItem: ImageHistoryItem = {
               ...imageData,
@@ -662,6 +800,12 @@ import Layout from '../layouts/Layout.astro';
       const previousImage = this.imageHistory[this.currentImageIndex];
       
       this.mainImage.src = previousImage.url;
+      
+      // Update background immediately when image loads
+      this.mainImage.onload = () => {
+        this.updateBackgroundFromImage(this.mainImage);
+      };
+      
       this.updateNavigationButtons();
     }
 
@@ -677,6 +821,12 @@ import Layout from '../layouts/Layout.astro';
         this.currentImageIndex++;
         const nextImage = this.imageHistory[this.currentImageIndex];
         this.mainImage.src = nextImage.url;
+        
+        // Update background immediately when image loads
+        this.mainImage.onload = () => {
+          this.updateBackgroundFromImage(this.mainImage);
+        };
+        
         this.updateNavigationButtons();
       } else {
         // We're at the newest image, load a new one

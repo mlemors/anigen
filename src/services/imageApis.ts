@@ -30,15 +30,9 @@ export class ImageApiService {
   private static readonly DESKTOP_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   private static readonly MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-  // Cache for decoded categories to avoid repeated decoding
-  private static decodedCategories: Map<string, string[]> = new Map();
-
-  // Simple obfuscation for category lists with caching
+  // Simple obfuscation for category lists
   private static decodeCategories(encoded: string): string[] {
-    if (!this.decodedCategories.has(encoded)) {
-      this.decodedCategories.set(encoded, JSON.parse(atob(encoded)));
-    }
-    return this.decodedCategories.get(encoded)!;
+    return JSON.parse(atob(encoded));
   }
 
   private static readonly API_CONFIGS: Record<ImageSource, ApiConfig> = {
